@@ -1,0 +1,18 @@
+14.Data e ora di ritiro in prenotazione devono essere precedenti alla data e ora di consegna.
+15.Data e ora di ritiro in effettivi utilizzi devono essere precedenti alla data e ora di consegna e successivi alla data e ora di ritiro di prenotazione.
+19.Nel caso di prenotazioni in cui data di ritiro e data di consegna coincidono, il prezzo deve essere uguale a (tariffa oraria)*(ore prenotate) + (tariffa chilometrica)*(chilometri effettivamente percorsi) se non e` attivo il bonus di rottamazione.
+20.Nel caso di prenotazioni in cui data di ritiro e data di consegna non coincidono e la differenza tra le due e`, al massimo, sette giorni, se  e` attivo il bonus di rottamazione il prezzo deve essere uguale: (tariffa chilometrica)*(chilometri effettivamente percorsi).
+21.Nel caso di prenotazioni in cui data di ritiro e data di consegna non coincidono e la differenza tra le due e`, al massimo, sette giorni, il  prezzo deve essere uguale a (tariffa giornaliera)*(giorni prenotati) + (tariffa chilometrica)*(chilometri effettivamente percorsi), se non e` attivo il bonus di rottamazione.
+22.Nel caso di prenotazioni in cui data di ritiro e data di consegna non coincidono e la differenza tra le due e` strettamente superiore a  sette giorni, il prezzo deve essere uguale a (tariffa settimanale) + (tariffa giorno aggiuntivo)*((giorni prenotati) – 7).
+23.Se la data di consegna dell'effettivo utilizzo e` successiva alla data di consegna della prenotazione al prezzo va aggiunta una penale.
+24.Se la comunicazione dell'annullamento di una prenotazione avviene entro le 24 ore precedenti la data/ora di ritiro della vettura, il  prezzo sara` uguale a 0.5*(prezzo previsto).
+25.Se la comunicazione della riduzione di una prenotazione avviene entro le 24 ore precedenti la data/ora di ritiro della vettura, il prezzo  deve essere uguale a (prezzo del periodo della nuova prenotazione) + 0.5*(prezzo di ((periodo della vecchia prenotazione) – (periodo della nuova prenotazione))).
+26.Se la data di consegna dell'effettivo utilizzo e` precedente alla data di consegna della prenotazione, il prezzo deve essere uguale  a (prezzo del periodo di effettivo utilizzo) + 0.5*(prezzo di ((periodo della prenotazione) – (periodo di effettivo utilizzo))).
+31.Se in una tupla di prenotazione DataOraAnnullamento non ha valore null, allora non deve esistere una tupla in utilizzo che fa riferimento a tale tupla di prenotazione.
+
+
+
+
+
+
+
