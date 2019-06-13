@@ -1,12 +1,12 @@
-# carsharing
+# Car Sharing !
 
 ## Progetto carsharing
 
 
-# DONE
+## DONE
 - createCarsharing 
 
-# TODO
+## TODO
 - Completare insertQuery 10%
 - Trigger 1%
 - Query 0%
