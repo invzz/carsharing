@@ -109,14 +109,39 @@ CREATE TABLE Abbonamento (
 	PRIMARY KEY (dataInizio,numSmartCard)
 );
 
+CREATE TABLE Parcheggio (
+	NomeParcheggio varchar(20) PRIMARY KEY,
+	numPosti numeric NOT NULL,
+	zona varchar(20) NOT NULL,
+	longitudine numeric (14,7) NOT NULL,
+	latitudine numeric(14,7) NOT NULL,
+	nazione varchar(20) NOT NULL,
+	citta varchar(20) NOT NULL,
+	cap numeric(5,0) NOT NULL,
+	civico numeric(4,0) NOT NULL,
+	via varchar(20) NOT NULL,
+	FOREIGN KEY(nazione,citta,cap,via,civico) 
+		REFERENCES Indirizzo (nazione,citta,cap,via,civico)	
+		ON DELETE CASCADE
+		ON UPDATE CASCADE
+);
+
+
+CREATE TABLE CategoriaParcheggio(
+	id serial primary key,
+	NomeParcheggio varchar(20) references Parcheggio,
+	categoria varchar(20) References Categoria
+);
+
 CREATE TABLE Vettura (
 	NomeVettura	varchar(10) PRIMARY KEY,
 	targa varchar(7) UNIQUE NOT NULL,
 	chilometraggio numeric NOT NULL,
-	seggiolini numeric,
-	colore varchar(20),
+	seggiolini numeric NuLL,
+	colore varchar(20) NOT NULL,
 	animali bool NOT NULL,
 	modello varchar(20) REFERENCES Modello,
+	sede varchar(20) references Parcheggio
 	CHECK (targa ~ $$[A-Za-z]{2}[0-9]{3}[A-Za-z]{2}$$)
 );
 
@@ -148,27 +173,6 @@ CREATE TABLE Rifornimenti (
 	CHECK(litri < 100)
 );
 
-
-CREATE TABLE Parcheggio (
-	NomeParcheggio varchar(20) PRIMARY KEY,
-	numPosti numeric NOT NULL,
-	categoria varchar(20) references Categoria NOT NULL,
-	zona varchar(20) NOT NULL,
-	longitudine numeric NOT NULL,
-	latitudine numeric NOT NULL,
-	inSede bool NOT NULL,
-	nazione varchar(20) NOT NULL,
-	citta varchar(20) NOT NULL,
-	cap numeric(5,0) NOT NULL,
-	civico numeric(4,0) NOT NULL,
-	via varchar(20) NOT NULL,
-	FOREIGN KEY(nazione,citta,cap,via,civico) 
-		REFERENCES Indirizzo (nazione,citta,cap,via,civico)	
-		ON DELETE CASCADE
-		ON UPDATE CASCADE
-);
-
-
 CREATE TABLE Utilizzo (
 	NumeroPrenotazione int NOT NULL 
 		REFERENCES Prenotazione 
@@ -187,7 +191,7 @@ CREATE TABLE Utilizzo (
 
 
 CREATE TABLE Sinistro (
-	numeroPrenotazione int REFERENCES Prenotazione(numeroPrenotazione), 
+	NumeroPrenotazione int REFERENCES Prenotazione(NumeroPrenotazione), 
 	dataOra timestamp,	
 	danni varchar NOT NULL,
 	dinamica varchar NOT NULL,	
@@ -215,7 +219,7 @@ CREATE TABLE Terzi (
 
 
 CREATE TABLE SinistroTestimoni (
-	numeroPrenotazione int NOT NULL,
+	NumeroPrenotazione int NOT NULL,
 	dataOra timestamp NOT NULL,
 	contatto varchar(20) NOT NULL REFERENCES Testimoni,
 	FOREIGN KEY(numeroPrenotazione, dataOra) references Sinistro (numeroPrenotazione, dataOra)
@@ -223,7 +227,7 @@ CREATE TABLE SinistroTestimoni (
 
 
 CREATE TABLE SinistroTerzi (
-	numeroPrenotazione serial NOT NULL,
+	NumeroPrenotazione serial NOT NULL,
 	dataOra timestamp NOT NULL,
 	targa char(7) NOT NULL REFERENCES terzi,
 	FOREIGN KEY(numeroPrenotazione, dataOra) references Sinistro(numeroPrenotazione, dataOra)
@@ -318,3 +322,17 @@ CREATE TABLE Utente (
 	ON DELETE CASCADE
 	ON UPDATE CASCADE
 );
+
+/** Funzioni utili per l'inserimento **/
+CREATE FUNCTION insertParcheggio(varchar(20),numeric,varchar(20),
+								numeric(14,7),numeric(14,7),
+								/* indirizzo */
+								varchar(20),varchar(20),numeric(5,0),
+								numeric(4,0),varchar(20)) 
+  RETURNS VOID AS 
+$$ 
+   INSERT INTO Indirizzo VALUES ($6,$7,$8,$9,$10);
+   INSERT INTO Parcheggio VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) 
+   
+$$ 
+LANGUAGE sql STRICT;
