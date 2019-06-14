@@ -1,4 +1,4 @@
-DROP SCHEMA carsharing CASCADE;
+--DROP SCHEMA carsharing CASCADE;
 CREATE SCHEMA carsharing;
 SET search_path TO carsharing;
 
@@ -275,7 +275,7 @@ CREATE TABLE Documento (
 	isPatente bool NOT NULL,
 	luogoDiNascita varchar(20) NOT NULL,
 	dataDiNascita date NOT NULL,
-	CategoriaPatente char(1) NOT NULL,
+	CategoriaPatente char(1) NULL,
 	nazione varchar(20) NOT NULL,
 	citta varchar(20) NOT NULL,
 	cap numeric(5,0) NOT NULL,
@@ -323,16 +323,3 @@ CREATE TABLE Utente (
 	ON UPDATE CASCADE
 );
 
-/** Funzioni utili per l'inserimento **/
-CREATE FUNCTION insertParcheggio(varchar(20),numeric,varchar(20),
-								numeric(14,7),numeric(14,7),
-								/* indirizzo */
-								varchar(20),varchar(20),numeric(5,0),
-								numeric(4,0),varchar(20)) 
-  RETURNS VOID AS 
-$$ 
-   INSERT INTO Indirizzo VALUES ($6,$7,$8,$9,$10);
-   INSERT INTO Parcheggio VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) 
-   
-$$ 
-LANGUAGE sql STRICT;
