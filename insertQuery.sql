@@ -1,11 +1,13 @@
 SET search_path TO carsharing;
 
+/*categoria*/
 INSERT INTO Categoria VALUES('City Car');
 INSERT INTO Categoria VALUES('Media');
 INSERT INTO Categoria VALUES('Comfort');
 INSERT INTO Categoria VALUES('Cargo');
 INSERT INTO Categoria VALUES('Elettrico');
 
+/*modelli*/
 INSERT INTO Modello VALUES('Fiat 500',3545,1505,1330,4,32,150,1200,80,20,80,200,0.12,15,'City Car');
 INSERT INTO Modello VALUES('Honda Civic',3705,1602,1230,5,28,180,1900,120,25,85,205,0.16,20,'Media');
 INSERT INTO Modello VALUES('Fiat Panda XL',3245,1605,1328,5,30,170,1600,100,22,82,202,0.13,18,'City Car');
@@ -16,14 +18,12 @@ INSERT INTO Modello VALUES('Tesla Model S',4350,1725,1330,5,32,200,3500,80,40,11
 INSERT INTO Modello VALUES('Porche Cayenne',3545,1505,1330,5,0,210,2300,80,20,110,250,0.18,35,'Comfort');
 INSERT INTO Modello VALUES('Opel Astra',3545,1505,1330,5,32,180,1800,110,30,80,200,0.14,20,'Media');
 
-INSERT INTO Tipo VALUES('Annuale',150,130);
-INSERT INTO Tipo VALUES('Semestrale',90,80);
-INSERT INTO Tipo VALUES('Mensile',60,55);
-
+/* parcheggi usa la funzione insert parcheggio per popolare indirizzo in cascata */
 SELECT insertparcheggio('Piazza Dante', 10, 'ponente',44.4052777,8.933604,'Italia','Genova',16128,1,'Piazza Dante');
 SELECT insertparcheggio('Marina di Sestri', 2, 'sestri',44.4032545,8.933204,'Italia','Genova',16154,12,'Via Pionieri');
 SELECT insertparcheggio('Mollassana', 15, 'bisagno',44.4052733,8.933608,'Italia','Genova',16138,1,'Via Emila');
 
+/* vetture */
 INSERT INTO vettura VALUES ('Andrea','EH790CH',5000,1,'verde',true,'Fiat 500','Piazza Dante');
 INSERT INTO vettura VALUES ('Anna','BX890BH',20100,2,'blu',true,'Fiat 500','Marina di Sestri');
 INSERT INTO vettura VALUES ('Paola','CY790CC',10000,3,'rosso',true,'Fiat 500','Marina di Sestri');
@@ -55,3 +55,21 @@ INSERT INTO vettura VALUES ('Poldo','ER452HH',30330,1,'verde',true,'Fiat Scudo',
 INSERT INTO vettura VALUES ('Piero','ER451HH',20330,1,'verde',true,'Fiat Scudo','Marina di Sestri');
 INSERT INTO vettura VALUES ('Mario','ER352HH',10330,1,'verde',true,'Fiat Scudo','Mollassana');
 
+/* Documento uso insertDocumento per popolare in cascata l'indirizzo */ 
+SELECT insertDocumento('CA2536AV','2017-12-29','2027-12-29','tecnico','Andres','Coronado',false,'Buenos Aires','1984-12-29',NULL,'Italia','Genova',16128,17,'Mura delle Grazie');
+SELECT insertDocumento('CA2436AV','2017-12-29','2027-12-29','tecnico','Andres','Coronado',true,'Buenos Aires','1984-12-29','C','Italia','Genova',16128,17,'Mura delle Grazie');
+SELECT insertDocumento('CA3576AV','2019-06-06','2029-06-06','data evangelist','Giuseppe','Carta',false,'Palermo','1992-01-01',NULL,'Italia','Genova',16138,17,'Via Emilia');
+SELECT insertDocumento('GE2456EF','2019-12-29','2029-12-29','data evangelist','Giuseppe','Carta',true,'Palermo','1992-01-01','B','Italia','Genova',16138,17,'Via Emilia');
+
+
+/* conducente */
+/* Persona */
+/* referente */
+/* rappresentante */
+/* Azienda */
+/* Utente */
+/* Abbonamento */
+/*tipo abb.*/
+INSERT INTO Tipo VALUES('Annuale',150,130);
+INSERT INTO Tipo VALUES('Semestrale',90,80);
+INSERT INTO Tipo VALUES('Mensile',60,55);
