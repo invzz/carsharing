@@ -18,7 +18,7 @@ INSERT INTO Modello VALUES('Tesla Model S',4350,1725,1330,5,32,200,3500,80,40,11
 INSERT INTO Modello VALUES('Porche Cayenne',3545,1505,1330,5,0,210,2300,80,20,110,250,0.18,35,'Comfort');
 INSERT INTO Modello VALUES('Opel Astra',3545,1505,1330,5,32,180,1800,110,30,80,200,0.14,20,'Media');
 
-/* parcheggi usa la funzione insert parcheggio per popolare indirizzo in cascata */
+/* parcheggi: la funzione insert parcheggio per popolare indirizzo in cascata */
 SELECT insertparcheggio('Piazza Dante', 10, 'ponente',44.4052777,8.933604,'Italia','Genova',16128,1,'Piazza Dante');
 SELECT insertparcheggio('Marina di Sestri', 2, 'sestri',44.4032545,8.933204,'Italia','Genova',16154,12,'Via Pionieri');
 SELECT insertparcheggio('Mollassana', 15, 'bisagno',44.4052733,8.933608,'Italia','Genova',16138,1,'Via Emila');
@@ -56,26 +56,53 @@ INSERT INTO vettura VALUES ('Piero','ER451HH',20330,1,'verde',true,'Fiat Scudo',
 INSERT INTO vettura VALUES ('Mario','ER352HH',10330,1,'verde',true,'Fiat Scudo','Mollassana');
 
 /* Documento uso insertDocumento per popolare in cascata l'indirizzo */ 
+/* se stesso indirizzo, non lo reinserisce evitando errori di duplicati sulla chiave di indirizzi */
 SELECT insertDocumento('CA2536AV','2017-12-29','2027-12-29','tecnico','Andres','Coronado',false,'Buenos Aires','1984-12-29',NULL,'Italia','Genova',16128,17,'Mura delle Grazie');
 SELECT insertDocumento('GE2456EG','2012-04-11','2022-04-11','tecnico','Andres','Coronado',true,'Buenos Aires','1984-12-29','C','Italia','Genova',16128,17,'Mura delle Grazie');
 SELECT insertDocumento('CA3476AV','2019-06-06','2029-06-06','data evangelist','Giuseppe','Carta',false,'Palermo','1992-01-01',NULL,'Italia','Genova',16138,134,'Via Emilia');
 SELECT insertDocumento('GE2456EF','2019-02-14','2029-02-24','data evangelist','Giuseppe','Carta',true,'Palermo','1992-01-01','B','Italia','Genova',16138,134,'Via Emilia');
 SELECT insertDocumento('CA3576AV','2019-06-06','2029-06-06','Processor Architect','Gabriele','Addari',false,'Genova','1995-01-01',NULL,'Italia','Genova',16154,12,'Via Sestri');
 SELECT insertDocumento('GE2451EG','2019-12-29','2029-12-29','Processor Architect','Addari','Addari',true,'Genova','1995-01-01','B','Italia','Genova',16154,12,'Via Sestri');
-
-/* se stesso indirizzo, non lo reinserisce evitando errori di duplicati sulla chiave di indirizzi */
 SELECT insertDocumento('CB3576EV','2015-06-06','2025-06-06','Psicologo','Veronica','Colleoni',false,'Bergamo','1989-01-01',NULL,'Italia','Genova',16128,17,'Mura Delle Grazie');
-SELECT insertDocumento('BS2457AF','2011-10-29','2021-10-29','Psicologo','Veronica','Colleoni',true,'Bergamo','1989-01-01','B','Italia','Genova',16128,17,'Mura Delle Grazie');
+SELECT insertDocumento('BG2457AF','2011-10-29','2021-10-29','Psicologo','Veronica','Colleoni',true,'Bergamo','1989-01-01','B','Italia','Genova',16128,17,'Mura Delle Grazie');
 SELECT insertDocumento('CA3546DV','2019-06-06','2029-06-06','Idraulico','Mario','Rossi',false,'Milano','1974-01-01',NULL,'Italia','Genova',16121,1,'Piazza Caricamento');
 SELECT insertDocumento('MI2226EF','2019-12-29','2029-12-29','Idraulico','Mario','Rossi',true,'Milano','1974-01-01','C','Italia','Genova',16121,1,'Piazza Caricamento');
 SELECT insertDocumento('CA4576UV','2019-06-06','2029-06-06','Regista','Alice','Bianchi',false,'Rogoredo','1992-01-01',NULL,'Italia','Genova',16138,17,'Via Emilia');
 SELECT insertDocumento('MI2356UF','2019-12-29','2029-12-29','Regista','Alice','Bianchi',true,'Rogoredo','1992-01-01','B','Italia','Genova',16138,17,'Via Emilia');
 
-/* conducente */
-/* Persona */
+
 /* referente */
+INSERT INTO Referente VALUES
+('3456154789','Giovanni','Referini'),
+('3386854762','Luca','Giurato'),
+('3456854789','Linus','Torvalds');
+
 /* rappresentante */
+INSERT INTO Rappresentante VALUES
+('Mario','Rossi','1974-01-01','Milano'),
+('Fabio','Fazio','1968-01-01','Roma'),
+('Donald','Knuth','1982-01-01','Venezia');
+
 /* Azienda */
+INSERT INTO AZIENDA VALUES
+(00205748,'Leonardo idraulica','0106532525','3456154789','Mario','Rossi','1974-01-01','Milano'),
+(00007148,'Rai','06564851','3386854762','Fabio','Fazio','1968-01-01','Roma'),
+(00237148,'IBM RedHat','025582524','3336456785','Donald','Knuth','1982-01-01','Venezia');
+
+/* conducente */
+INSERT INTO Conducente(piva,nrDocumento,nrPatente) VALUES (00205748,'CA2536AV','BG2457AF');
+INSERT INTO Conducente(piva,nrDocumento,nrPatente) VALUES (00205748,'CA3576AV','MI2356UF');
+/* Persona 
+INSERT INTO Persona VALUES ('CRNNRS84T29Z600A',3483794192,0,20,'CA2536AV','GE2456EG'),
+(3483794192,NULL,20,'CLLVNC89A41A794B','CB3576EV','BG2457AF'),
+(3483794192,NULL,20,'CRTGPP92A01G273F','CA3476AV','GE2456EF'),
+(3483794192,NULL,20,'DDRGRL95A01D969R','CA3576AV','GE2451EG'),
+(3483794192,NULL,20,'RSSMRA74A01F205Z','CA3546DV','MI2226EF'),
+(3483794192,NULL,20,'BNCLCA93A41F205I','CA4576UV','MI2356UF')
+;*/
+/* sede */
+SELECT insertSede(00205748,'Italia','Milano',20100,'Via Trento','Legale');
+
 /* Utente */
 /* Abbonamento */
 /*tipo abb.*/

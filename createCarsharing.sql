@@ -1,4 +1,4 @@
---DROP SCHEMA carsharing CASCADE;
+DROP SCHEMA IF EXISTS carsharing CASCADE;
 CREATE SCHEMA carsharing;
 SET search_path TO carsharing;
 
@@ -258,12 +258,25 @@ CREATE TABLE Azienda (
 	nomeRappresentante varchar(10) NOT NULL,
 	cognomeRappresentante varchar(15) NOT NULL,
 	dataDiNascitaRappresentante date NOT NULL,
-	FOREIGN KEY (nomeRappresentante, cognomeRappresentante, dataDiNascitaRappresentante) 
-	REFERENCES Rappresentante
-	ON DELETE CASCADE 
-	ON UPDATE CASCADE,
 	CHECK (piva != 0)
 );
+
+CREATE TABLE Sede(
+	idsede serial PRIMARY KEY,
+	piva numeric(11) REFERENCES azienda,
+	nazione varchar(20) NOT NULL,
+	citta varchar(20) NOT NULL,
+	cap numeric(5,0) NOT NULL,
+	civico numeric(4,0) NOT NULL,
+	via varchar(20) NOT NULL,
+	tipoSede varchar(9) NOT NULL,
+	FOREIGN KEY(nazione,citta,cap,via,civico) 
+		REFERENCES Indirizzo (nazione,citta,cap,via,civico)	
+		ON DELETE CASCADE
+		ON UPDATE CASCADE,
+	CHECK (tiposede = 'Legale' or tiposede = 'Operativa')
+);
+/* trigger una azienda non puo avere piu di 1 sede di tipo legale */
 
 CREATE TABLE Documento (
 	nrDocumento varchar(10) PRIMARY KEY,
@@ -290,8 +303,8 @@ CREATE TABLE Documento (
 
 CREATE TABLE Conducente (
 	id_conducente serial PRIMARY KEY,
-	piva numeric(11) NOT NULL REFERENCES Azienda, 
-	nrDocumento varchar(10) NOT NULL REFERENCES Documento 
+	piva numeric(11) NULL REFERENCES Azienda, 
+	nrDocumento varchar(10) REFERENCES Documento 
 	ON DELETE CASCADE 
 	ON UPDATE CASCADE,
 	nrPatente varchar (10) NOT NULL REFERENCES Documento 
@@ -299,14 +312,12 @@ CREATE TABLE Conducente (
 	ON UPDATE CASCADE
 );
 
-
-
 CREATE TABLE Persona (
-	id_conducente int references Conducente
+	codFisc char(16) NOT NULL PRIMARY KEY,
+	id_conducente int references Conducente 
 	ON DELETE CASCADE,	
-	telefono varchar(10) NOT NULL,
+	telefono varchar(11) NOT NULL,
 	eta numeric, /* calcolato automaticamente */
-	codFisc char(11) NOT NULL PRIMARY KEY,
 	nrDocumento varchar(10) NOT NULL references Documento,
 	nrPatente varchar(10) NOT NULL references Documento,
 	CHECK (eta >= 18)
@@ -315,11 +326,90 @@ CREATE TABLE Persona (
 
 CREATE TABLE Utente (
 	email varchar(30) PRIMARY KEY, 
-	piva numeric(11) REFERENCES Azienda 
+	piva integer REFERENCES Azienda 
 	ON UPDATE CASCADE	
 	ON DELETE CASCADE,
 	codfisc char(11) REFERENCES Persona 
 	ON DELETE CASCADE
 	ON UPDATE CASCADE
 );
+/** Funzioni utili per l'inserimento **/
+--DROP FUNCTION insertParcheggio;
+--DROP FUNCTION insertDocumento;
+SET search_path TO carsharing;
+
+--insertParcheggio: 
+CREATE FUNCTION insertParcheggio(varchar(20),numeric,varchar(20),numeric(14,7),numeric(14,7),
+				/* indirizzo */varchar(20),varchar(20),numeric(5,0),numeric(4,0),varchar(20)) 
+RETURNS VOID AS $$
+DECLARE 
+	BEGIN
+		IF EXISTS( SELECT * FROM Indirizzo 
+				  AS i 
+				  WHERE i.nazione = $6 
+				  AND i.citta = $7
+				  AND i.cap = $8
+				  AND i.civico = $9
+				  AND i.via= $10)
+		THEN
+		INSERT INTO Parcheggio VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10);
+		ELSE
+			INSERT INTO Indirizzo VALUES ($6,$7,$8,$9,$10) ON CONFLICT DO NOTHING;
+			INSERT INTO Parcheggio VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10);
+		END IF;
+	END;
+$$ LANGUAGE plpgsql ;
+
+
+--insertDocumento
+CREATE FUNCTION insertDocumento(
+	nrDocumento varchar(10),rilascio date,scadenza date,professione varchar(30),nome varchar(10),
+	cognome varchar (15),isPatente bool ,luogoDiNascita varchar(20), dataDiNascita date,
+	CategoriaPatente char(1),nazione1 varchar(20), citta1 varchar(20), cap1 numeric(5,0),
+	civico1 numeric(4,0), via1 varchar(20))
+	
+	RETURNS VOID AS $$ 
+	BEGIN
+		IF EXISTS( SELECT * FROM Indirizzo 
+				  AS i 
+				  WHERE i.nazione = nazione1 
+				  AND i.citta = citta1
+				  AND i.cap = cap1
+				  AND i.civico = civico1
+				  AND i.via= via1)
+		THEN
+   		INSERT INTO Documento VALUES (nrDocumento,rilascio,scadenza,professione,nome,cognome,
+								 isPatente,luogoDiNascita,dataDiNascita,CategoriaPatente,
+								 nazione1,citta1,cap1,civico1,via1);
+		ELSE
+		INSERT INTO Indirizzo VALUES (nazione1,citta1,cap1,civico1,via1) ON CONFLICT DO NOTHING;
+		INSERT INTO Documento VALUES (nrDocumento,rilascio,scadenza,professione,nome,cognome,
+								 isPatente,luogoDiNascita,dataDiNascita,CategoriaPatente,
+								 nazione1,citta1,cap1,civico1,via1);
+		END IF;
+	END;
+$$ LANGUAGE plpgsql;
+
+CREATE FUNCTION insertSede(	piva numeric(11),nazione1 varchar(20) ,
+							citta1 varchar(20),cap1 numeric(5,0),civico1 numeric(4,0) ,
+							via1 varchar(20),tipoSede1 varchar(9))
+
+	RETURNS VOID AS $$ 
+	BEGIN
+		IF EXISTS( SELECT * FROM Indirizzo 
+				  AS i 
+				  WHERE i.nazione = nazione1 
+				  AND i.citta = citta1
+				  AND i.cap = cap1
+				  AND i.civico = civico1
+				  AND i.via= via1)
+		THEN
+   		INSERT INTO Sede(piva,nazione,citta,cap,civico,via,tipoSede) VALUES (piva,nazione1,citta1,cap1,civico1,via1,tipoSede1);
+		ELSE
+		INSERT INTO Indirizzo VALUES (nazione1,citta1,cap1,civico1,via1) ON CONFLICT DO NOTHING;
+		INSERT INTO Sede(piva,nazione,citta,cap,civico,via,tipoSede) VALUES (piva,nazione1,citta1,cap1,civico1,via1,tipoSede1);
+		END IF;
+	END;
+$$ LANGUAGE plpgsql; 
+
 
