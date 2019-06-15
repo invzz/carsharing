@@ -23,6 +23,20 @@ SELECT insertparcheggio('Piazza Dante', 10, 'ponente',44.4052777,8.933604,'Itali
 SELECT insertparcheggio('Marina di Sestri', 2, 'sestri',44.4032545,8.933204,'Italia','Genova',16154,12,'Via Pionieri');
 SELECT insertparcheggio('Mollassana', 15, 'bisagno',44.4052733,8.933608,'Italia','Genova',16138,1,'Via Emila');
 
+
+/* categoriaParcheggi */
+INSERT INTO categoriaparcheggio(nomeparcheggio,categoria) VALUES ('Piazza Dante', 'City Car');
+INSERT INTO categoriaparcheggio(nomeparcheggio,categoria) VALUES ('Piazza Dante', 'Cargo');
+INSERT INTO categoriaparcheggio(nomeparcheggio,categoria) VALUES ('Piazza Dante', 'Elettrico');
+INSERT INTO categoriaparcheggio(nomeparcheggio,categoria) VALUES ('Mollassana', 'Cargo');
+INSERT INTO categoriaparcheggio(nomeparcheggio,categoria) VALUES ('Mollassana', 'Comfort');
+INSERT INTO categoriaparcheggio(nomeparcheggio,categoria) VALUES ('Mollassana', 'Media');
+INSERT INTO categoriaparcheggio(nomeparcheggio,categoria) VALUES ('Marina di Sestri', 'City Car');
+INSERT INTO categoriaparcheggio(nomeparcheggio,categoria) VALUES ('Marina di Sestri', 'Media');
+INSERT INTO categoriaparcheggio(nomeparcheggio,categoria) VALUES ('Marina di Sestri', 'Elettrico');
+INSERT INTO categoriaparcheggio(nomeparcheggio,categoria) VALUES ('Piazza Dante', 'Media');
+INSERT INTO categoriaparcheggio(nomeparcheggio,categoria) VALUES ('Piazza Dante', 'Comfort');
+
 /* vetture */
 INSERT INTO vettura VALUES ('Andrea','EH790CH',5000,1,'verde',true,'Fiat 500','Piazza Dante');
 INSERT INTO vettura VALUES ('Anna','BX890BH',20100,2,'blu',true,'Fiat 500','Marina di Sestri');
@@ -108,25 +122,31 @@ SELECT insertSede(00205748,'Italia','Genova',16142,1,'Via Sampierdarena','Legale
 SELECT insertSede(00205748,'Italia','Genova',16122,1,'Via Erzelli','Legale');
 
 /*tipo abb.*/
-INSERT INTO Tipo VALUES('Annuale',150,130);
-INSERT INTO Tipo VALUES('Semestrale',90,80);
-INSERT INTO Tipo VALUES('Mensile',60,55);
+INSERT INTO Tipo VALUES('Annuale',365,150,15);
+INSERT INTO Tipo VALUES('Semestrale',182,90,10);
+INSERT INTO Tipo VALUES('Mensile',30,60,5);
+
+/* MetodoDiPAgamento ed overload carta ban prepagato*/
+SELECT insertMetodo(1,'IT83X0200801452000101755018','Andres Coronado');
+SELECT insertMetodo(2,1234123412341234,'Giuseppe Carta','VISA','2021-01-01');
+SELECT insertMetodo(3,1234123412341234,'Red Hat Inc','Mastercard','2020-01-01');
+SELECT insertMetodo(4,'IT01Y0304801452000101755018','Rai Cinema');
+SELECT insertMetodo(5,200);
+SELECT insertMetodo(6,50);
 
 /* Utente */
 INSERT INTO utente VALUES 
-('info@leonardo.com',00205748,NULL),
-('info@rai.it',00007148,NULL),
-('info@redhat.org',00237148,NULL),
-('invizuz@gmail.com',NULL,'CRNNRS84T29Z600A'),
-('mariorossi@libero.it',NULL,'RSSMRA74A01F205Z'),
-('cartagiuseppe@gmail.com',NULL,'CRTGPP92A01G273F');
+('info@leonardo.com',00205748,NULL,5),
+('info@rai.it',00007148,NULL,4),
+('info@redhat.org',00237148,NULL,3),
+('invizuz@gmail.com',NULL,'CRNNRS84T29Z600A',1),
+('mariorossi@libero.it',NULL,'RSSMRA74A01F205Z',6),
+('cartagiuseppe@gmail.com',NULL,'CRTGPP92A01G273F',2);
 
-/* MetodoDiPAgamento ed overload carta ban prepagato*/
-SELECT insertMetodo('IT83X0200801452000101755018','Andres Coronado');
-SELECT insertMetodo(1234123412341234,'Giuseppe Carta','VISA','2021-01-01');
-SELECT insertMetodo('IT01Y0304801452000101755018','Mario Rossi');
-SELECT insertMetodo(200);
-SELECT insertMetodo(50);
-
-
-/* Abbonamento */
+/* Abbonamento insertAbbonamento(dataInizio timestamp,databonus date,bonus numeric, pin numeric, card numeric, tipo varchar) */
+SELECT insertAbbonamento(now()::timestamp,now()::date,10,1234,1,'Annuale');
+SELECT insertAbbonamento(now()::timestamp,NULL,0,1432,2,'Annuale');
+SELECT insertAbbonamento(now()::timestamp,NULL,0,1324,3,'Annuale');
+SELECT insertAbbonamento(now()::timestamp,NULL,0,4123,4,'Annuale');
+SELECT insertAbbonamento(now()::timestamp,now()::date,15,2341,5,'Annuale');
+SELECT insertAbbonamento(now()::timestamp,now()::date,15,3412,6,'Annuale');

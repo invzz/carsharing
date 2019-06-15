@@ -57,13 +57,14 @@ CREATE TABLE Fatturazione (
 /* trigger TempoAnnullato > 0 ==> TempoNonUsufruito > 0*/
 CREATE TABLE Tipo (
 	periodo	varchar(20) PRIMARY KEY,
+	ngiorni int, /* aggiunto per insertAbbonamento, numero di giorni */
 	costo numeric NOT NULL,
-	riduzione numeric NuLL
+	riduzioneEta numeric NuLL
 );
 /* periodo annuale, bimestrale, semestrale, mensile, settimanale...*/
 
 CREATE TABLE Carta (
-	numero numeric(10,0) NOT NULL, 
+	numero numeric(16,0) NOT NULL, 
 	circuito varchar(16) NOT NULL,
 	intestatario varchar(30) NOT NULL,
 	scadenza date NOT NULL ,
@@ -79,9 +80,9 @@ CREATE TABLE Rid (
 );
 
 CREATE TABLE MetodoDiPagamento (
-	numSmartCard numeric PRIMARY KEY,
+	numSmartCard serial PRIMARY KEY,
 	versato numeric, 
-	numeroCarta numeric(16), 
+	numeroCarta numeric(16,0), 
 	intestatarioCarta varchar(30),		
 	circuitoCarta varchar(10),
 	scadenzaCarta date,
@@ -102,13 +103,15 @@ CREATE TABLE MetodoDiPagamento (
 CREATE TABLE Abbonamento (
 	dataInizio timestamp NOT NULL,	
 	dataFine timestamp NOT NULL,
-	bonusRiduzione numeric,
+	dataBonus date,
+	bonusRottamazione numeric(3,0),
 	pinCarta	numeric(4,0) NOT NULL,
-	numSmartCard numeric NOT NULL references MetodoDiPagamento,
+	numSmartCard integer NOT NULL references MetodoDiPagamento,
 	tipo varchar(20) NOT NULL references Tipo,
-	PRIMARY KEY (dataInizio,numSmartCard)
+	PRIMARY KEY (dataInizio,numSmartCard),
+	CHECK( datafine > datainizio),
+	CHECK(BonusRottamazione <= 100)
 );
-
 CREATE TABLE Parcheggio (
 	NomeParcheggio varchar(20) PRIMARY KEY,
 	numPosti numeric NOT NULL,
@@ -125,7 +128,6 @@ CREATE TABLE Parcheggio (
 		ON DELETE CASCADE
 		ON UPDATE CASCADE
 );
-
 
 CREATE TABLE CategoriaParcheggio(
 	id serial primary key,
@@ -333,8 +335,13 @@ CREATE TABLE Utente (
 	codfisc char(16) REFERENCES Persona 
 	ON DELETE CASCADE
 	ON UPDATE CASCADE,
+	numSmartCard int REFERENCES MetodoDiPagamento,
 	CHECK (email ~ '^[a-zA-Z0-9.!#$%&''*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$')
 );
+
+/** Funzioni utili per l'inserimento **/
+
+SET search_path TO carsharing;
 
 --insertParcheggio: 
 CREATE OR REPLACE 
@@ -515,31 +522,76 @@ $$
 LANGUAGE plpgsql;
 
 --insertMetodo
-CREATE OR REPLACE FUNCTION insertMetodo(numeric,numeric,varchar,varchar,date,char(27),varchar)
+CREATE OR REPLACE FUNCTION insertMetodo(int,numeric,numeric,varchar,varchar,date,char(27),varchar)
 RETURNS VOID AS $$
 DECLARE
 BEGIN
-	IF versato = NULL OR versato = 0
+	IF $1 = NULL OR $1 = 0
 	THEN
 		IF EXISTS (SELECT * from Carta,rid WHERE carta.numero = $2 OR rid.codiban = $6)
 		THEN 
-			INSERT INTO MetodoDiPagaento(versato,numeroCarta,intestatarioCarta,circuitoCarta,scadenzaCartadate,codIban,intestatarioConto)
-			VALUES ($1,$2,$3,$4,$5,$6,$7);
+			INSERT INTO MetodoDiPagaento(versato,numeroCarta,intestatarioCarta,circuitoCarta,scadenzaCarta,codIban,intestatarioConto)
+			VALUES ($1,$2,$3,$4,$5,$6,$7,$8);
 		END IF; 
 		IF $2 != NULL AND $6 = NULL
 		THEN
 			INSERT INTO carta 
-			VALUES ($2,$3,$4,$5); 
-			INSERT INTO MetodoDiPagamento(versato,numeroCarta,intestatarioCarta,circuitoCarta,scadenzaCartadate,codIban,intestatarioConto)
-			VALUES ($1,$2,$3,$4,$5,$6,$7);
+			VALUES ($3,$4,$5,$6); 
+			INSERT INTO MetodoDiPagamento(numsmartcard,versato,numeroCarta,intestatarioCarta,circuitoCarta,scadenzaCarta,codIban,intestatarioConto)
+			VALUES ($1,$2,$3,$4,$5,$6,$7,$8);
 		END IF;
-		IF  r.numerocarta = NULL AND r.codIban != NULL
+		IF  $2 = NULL AND $6 != NULL
 		THEN
 			INSERT INTO rid
-			VALUES ($6,$7);
-			INSERT INTO MetodoDiPagamento(versato,numeroCarta,intestatarioCarta,circuitoCarta,scadenzaCartadate,codIban,intestatarioConto)
-			VALUES ($1,$2,$3,$4,$5,$6,$7);
+			VALUES ($7,$8);
+			INSERT INTO MetodoDiPagamento(numsnartcard,versato,numeroCarta,intestatarioCarta,circuitoCarta,scadenzaCarta,codIban,intestatarioConto)
+			VALUES ($1,$2,$3,$4,$5,$6,$7,$8);
 		END IF;
 	END IF;
 END;
+$$ LANGUAGE plpgsql;
+
+/*overload carta shorcut */
+CREATE OR REPLACE FUNCTION insertMetodo(card int, num numeric,inte varchar,circ varchar,scad date)
+RETURNS VOID AS $$
+BEGIN
+	INSERT INTO carta(numero,circuito,intestatario,scadenza) VALUES (num, circ, inte, scad);
+	INSERT INTO MetodoDiPagamento(numeroCarta,IntestatarioCarta,circuitoCarta,scadenzaCarta) VALUES (num,inte,circ,scad);
+END;
+$$ LANGUAGE plpgsql;
+
+/*overload rid shorcut */
+CREATE OR REPLACE FUNCTION insertMetodo(card int,iban varchar,inte varchar)
+RETURNS VOID AS $$
+BEGIN
+	INSERT INTO rid(codIban, Intestatario) VALUES (iban, inte);
+	INSERT INTO MetodoDiPagamento(numSmartCard,codIban,intestatarioConto)
+			VALUES (card,iban, inte);
+END;
+$$ LANGUAGE plpgsql;
+
+
+/* overload prepagato shortcut per inserimento metodo prepagato */
+CREATE OR REPLACE FUNCTION insertMetodo(card int,versato numeric)
+RETURNS VOID AS $$
+BEGIN
+	INSERT INTO MetodoDiPagamento(numSmartCard,versato)
+			VALUES (card,versato);
+END;
+$$ LANGUAGE plpgsql;
+
+--InsertAbbonamento
+CREATE OR REPLACE FUNCTION insertAbbonamento(dataInizio timestamp,databonus date,bonus numeric, pin numeric, card numeric, tipo1 varchar)
+RETURNS VOID AS $$
+DECLARE
+	days int;
+	etaU int;
+	
+BEGIN
+	SELECT ngiorni INTO days FROM tipo WHERE periodo = tipo1;
+	SELECT eta INTO etaU FROM utente NATURAL JOIN persona WHERE numSmartCard = card; 
+	INSERT INTO Abbonamento(datainizio,datafine,dataBonus,bonusRottamazione,pincarta,numsmartcard,tipo) 
+	VALUES (datainizio,datainizio + days * INTERVAL '1 day',databonus,bonus,pin,card,tipo1);
+END;
 $$ LANGUAGE plpgsql
+

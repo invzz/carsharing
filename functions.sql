@@ -179,7 +179,7 @@ $$
 LANGUAGE plpgsql;
 
 --insertMetodo
-CREATE OR REPLACE FUNCTION insertMetodo(numeric,numeric,varchar,varchar,date,char(27),varchar)
+CREATE OR REPLACE FUNCTION insertMetodo(int,numeric,numeric,varchar,varchar,date,char(27),varchar)
 RETURNS VOID AS $$
 DECLARE
 BEGIN
@@ -188,28 +188,28 @@ BEGIN
 		IF EXISTS (SELECT * from Carta,rid WHERE carta.numero = $2 OR rid.codiban = $6)
 		THEN 
 			INSERT INTO MetodoDiPagaento(versato,numeroCarta,intestatarioCarta,circuitoCarta,scadenzaCarta,codIban,intestatarioConto)
-			VALUES ($1,$2,$3,$4,$5,$6,$7);
+			VALUES ($1,$2,$3,$4,$5,$6,$7,$8);
 		END IF; 
 		IF $2 != NULL AND $6 = NULL
 		THEN
 			INSERT INTO carta 
-			VALUES ($2,$3,$4,$5); 
-			INSERT INTO MetodoDiPagamento(versato,numeroCarta,intestatarioCarta,circuitoCarta,scadenzaCarta,codIban,intestatarioConto)
-			VALUES ($1,$2,$3,$4,$5,$6,$7);
+			VALUES ($3,$4,$5,$6); 
+			INSERT INTO MetodoDiPagamento(numsmartcard,versato,numeroCarta,intestatarioCarta,circuitoCarta,scadenzaCarta,codIban,intestatarioConto)
+			VALUES ($1,$2,$3,$4,$5,$6,$7,$8);
 		END IF;
 		IF  $2 = NULL AND $6 != NULL
 		THEN
 			INSERT INTO rid
-			VALUES ($6,$7);
-			INSERT INTO MetodoDiPagamento(versato,numeroCarta,intestatarioCarta,circuitoCarta,scadenzaCarta,codIban,intestatarioConto)
-			VALUES ($1,$2,$3,$4,$5,$6,$7);
+			VALUES ($7,$8);
+			INSERT INTO MetodoDiPagamento(numsnartcard,versato,numeroCarta,intestatarioCarta,circuitoCarta,scadenzaCarta,codIban,intestatarioConto)
+			VALUES ($1,$2,$3,$4,$5,$6,$7,$8);
 		END IF;
 	END IF;
 END;
 $$ LANGUAGE plpgsql;
 
 /*overload carta shorcut */
-CREATE OR REPLACE FUNCTION insertMetodo(num numeric,inte varchar,circ varchar,scad date)
+CREATE OR REPLACE FUNCTION insertMetodo(card int, num numeric,inte varchar,circ varchar,scad date)
 RETURNS VOID AS $$
 BEGIN
 	INSERT INTO carta(numero,circuito,intestatario,scadenza) VALUES (num, circ, inte, scad);
@@ -218,21 +218,38 @@ END;
 $$ LANGUAGE plpgsql;
 
 /*overload rid shorcut */
-CREATE OR REPLACE FUNCTION insertMetodo(iban varchar,inte varchar)
+CREATE OR REPLACE FUNCTION insertMetodo(card int,iban varchar,inte varchar)
 RETURNS VOID AS $$
 BEGIN
 	INSERT INTO rid(codIban, Intestatario) VALUES (iban, inte);
-	INSERT INTO MetodoDiPagamento(codIban,intestatarioConto)
-			VALUES (iban, inte);
+	INSERT INTO MetodoDiPagamento(numSmartCard,codIban,intestatarioConto)
+			VALUES (card,iban, inte);
 END;
 $$ LANGUAGE plpgsql;
 
 
 /* overload prepagato shortcut per inserimento metodo prepagato */
-CREATE OR REPLACE FUNCTION insertMetodo(versato numeric)
+CREATE OR REPLACE FUNCTION insertMetodo(card int,versato numeric)
 RETURNS VOID AS $$
 BEGIN
-	INSERT INTO MetodoDiPagamento(versato)
-			VALUES (versato);
+	INSERT INTO MetodoDiPagamento(numSmartCard,versato)
+			VALUES (card,versato);
+END;
+$$ LANGUAGE plpgsql;
+
+--InsertAbbonamento
+CREATE OR REPLACE FUNCTION insertAbbonamento(dataInizio timestamp,databonus date,bonus numeric, pin numeric, card numeric, tipo1 varchar)
+RETURNS VOID AS $$
+DECLARE
+	days int;
+	etaU int;
+	
+BEGIN
+	SELECT ngiorni INTO days FROM tipo WHERE periodo = tipo1;
+	SELECT eta INTO etaU FROM utente NATURAL JOIN persona WHERE numSmartCard = card; 
+	INSERT INTO Abbonamento(datainizio,datafine,dataBonus,bonusRottamazione,pincarta,numsmartcard,tipo) 
+	VALUES (datainizio,datainizio + days * INTERVAL '1 day',databonus,bonus,pin,card,tipo1);
 END;
 $$ LANGUAGE plpgsql
+
+
