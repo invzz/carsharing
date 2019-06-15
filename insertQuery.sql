@@ -75,7 +75,7 @@ SELECT insertDocumento('MI2356UF','2019-12-29','2029-12-29','Regista','Alice','B
 INSERT INTO Referente VALUES
 ('3456154789','Giovanni','Referini'),
 ('3386854762','Luca','Giurato'),
-('3456854789','Linus','Torvalds');
+('3336456785','Linus','Torvalds');
 
 /* rappresentante */
 INSERT INTO Rappresentante VALUES
@@ -85,23 +85,30 @@ INSERT INTO Rappresentante VALUES
 
 /* Azienda */
 INSERT INTO AZIENDA VALUES
-(00205748,'Leonardo idraulica','0106532525','3456154789','Mario','Rossi','1974-01-01','Milano'),
-(00007148,'Rai','06564851','3386854762','Fabio','Fazio','1968-01-01','Roma'),
-(00237148,'IBM RedHat','025582524','3336456785','Donald','Knuth','1982-01-01','Venezia');
+(00205748,'Leonardo idraulica','0106532525','3456154789','Mario','Rossi','1974-01-01'),
+(00007148,'Rai','06564851','3386854762','Fabio','Fazio','1968-01-01'),
+(00237148,'IBM RedHat','025582524','3336456785','Donald','Knuth','1982-01-01');
 
 /* conducente */
-INSERT INTO Conducente(piva,nrDocumento,nrPatente) VALUES (00205748,'CA2536AV','BG2457AF');
-INSERT INTO Conducente(piva,nrDocumento,nrPatente) VALUES (00205748,'CA3576AV','MI2356UF');
-/* Persona 
-INSERT INTO Persona VALUES ('CRNNRS84T29Z600A',3483794192,0,20,'CA2536AV','GE2456EG'),
+INSERT INTO Conducente(piva,nrDocumento,nrPatente) VALUES (00237148,'CB3576EV','BG2457AF');
+INSERT INTO Conducente(piva,nrDocumento,nrPatente) VALUES (00007148,'CA4576UV','MI2356UF');
+
+
+INSERT INTO Persona VALUES 
+('CRNNRS84T29Z600A',select id_conducente FROM Conducente WHERE nrDocumento=, 3483794192,0,20,'CA2536AV','GE2456EG'),
 (3483794192,NULL,20,'CLLVNC89A41A794B','CB3576EV','BG2457AF'),
 (3483794192,NULL,20,'CRTGPP92A01G273F','CA3476AV','GE2456EF'),
 (3483794192,NULL,20,'DDRGRL95A01D969R','CA3576AV','GE2451EG'),
 (3483794192,NULL,20,'RSSMRA74A01F205Z','CA3546DV','MI2226EF'),
 (3483794192,NULL,20,'BNCLCA93A41F205I','CA4576UV','MI2356UF')
-;*/
+;
+
 /* sede */
-SELECT insertSede(00205748,'Italia','Milano',20100,'Via Trento','Legale');
+SELECT insertSede(00205748,'Italia','Milano',20100,12,'Via Trento','Legale');
+SELECT insertSede(00205748,'Italia','Genova',16162,1,'Via Bolzaneto','Operativa');
+SELECT insertSede(00205748,'Italia','Genova',16142,1,'Via Sampierdarena','Legale');
+SELECT insertSede(00205748,'Italia','Genova',16122,1,'Via Erzelli','Legale');
+
 
 /* Utente */
 /* Abbonamento */
