@@ -1,14 +1,10 @@
-# Car Sharing !
+# Car Sharing 
 
-## Progetto carsharing
+## createCarsharing
 
+crea il db e aggiunge le funzioni
 
-## DONE
-- createCarsharing 
+## insertquery
 
-## TODO
-- Completare insertQuery 10%
-- Trigger 1%
-- Query 0%
-- Procedure 0%
+inserisce i dati
 

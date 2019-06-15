@@ -1,12 +1,5 @@
 /** Funzioni utili per l'inserimento **/
-/*	DROP FUNCTION insertParcheggio;
-	DROP FUNCTION insertDocumento;
-	DROP FUNCTION insertSede;
-*/
-
-
 SET search_path TO carsharing;
-
 --insertParcheggio: 
 CREATE OR REPLACE 
 FUNCTION insertParcheggio(varchar(20),numeric,varchar(20),numeric(14,7),numeric(14,7),
@@ -183,8 +176,63 @@ RETURNS VOID AS $$
 		END IF;
 	END;
 $$
-LANGUAGE plpgsql
+LANGUAGE plpgsql;
+
+--insertMetodo
+CREATE OR REPLACE FUNCTION insertMetodo(numeric,numeric,varchar,varchar,date,char(27),varchar)
+RETURNS VOID AS $$
+DECLARE
+BEGIN
+	IF $1 = NULL OR $1 = 0
+	THEN
+		IF EXISTS (SELECT * from Carta,rid WHERE carta.numero = $2 OR rid.codiban = $6)
+		THEN 
+			INSERT INTO MetodoDiPagaento(versato,numeroCarta,intestatarioCarta,circuitoCarta,scadenzaCarta,codIban,intestatarioConto)
+			VALUES ($1,$2,$3,$4,$5,$6,$7);
+		END IF; 
+		IF $2 != NULL AND $6 = NULL
+		THEN
+			INSERT INTO carta 
+			VALUES ($2,$3,$4,$5); 
+			INSERT INTO MetodoDiPagamento(versato,numeroCarta,intestatarioCarta,circuitoCarta,scadenzaCarta,codIban,intestatarioConto)
+			VALUES ($1,$2,$3,$4,$5,$6,$7);
+		END IF;
+		IF  $2 = NULL AND $6 != NULL
+		THEN
+			INSERT INTO rid
+			VALUES ($6,$7);
+			INSERT INTO MetodoDiPagamento(versato,numeroCarta,intestatarioCarta,circuitoCarta,scadenzaCarta,codIban,intestatarioConto)
+			VALUES ($1,$2,$3,$4,$5,$6,$7);
+		END IF;
+	END IF;
+END;
+$$ LANGUAGE plpgsql;
+
+/*overload carta shorcut */
+CREATE OR REPLACE FUNCTION insertMetodo(num numeric,inte varchar,circ varchar,scad date)
+RETURNS VOID AS $$
+BEGIN
+	INSERT INTO carta(numero,circuito,intestatario,scadenza) VALUES (num, circ, inte, scad);
+	INSERT INTO MetodoDiPagamento(numeroCarta,IntestatarioCarta,circuitoCarta,scadenzaCarta) VALUES (num,inte,circ,scad);
+END;
+$$ LANGUAGE plpgsql;
+
+/*overload rid shorcut */
+CREATE OR REPLACE FUNCTION insertMetodo(iban varchar,inte varchar)
+RETURNS VOID AS $$
+BEGIN
+	INSERT INTO rid(codIban, Intestatario) VALUES (iban, inte);
+	INSERT INTO MetodoDiPagamento(codIban,intestatarioConto)
+			VALUES (iban, inte);
+END;
+$$ LANGUAGE plpgsql;
 
 
-
-
+/* overload prepagato shortcut per inserimento metodo prepagato */
+CREATE OR REPLACE FUNCTION insertMetodo(versato numeric)
+RETURNS VOID AS $$
+BEGIN
+	INSERT INTO MetodoDiPagamento(versato)
+			VALUES (versato);
+END;
+$$ LANGUAGE plpgsql

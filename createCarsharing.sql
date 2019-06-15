@@ -64,7 +64,7 @@ CREATE TABLE Tipo (
 
 CREATE TABLE Carta (
 	numero numeric(10,0) NOT NULL, 
-	circuito varchar(10) NOT NULL,
+	circuito varchar(16) NOT NULL,
 	intestatario varchar(30) NOT NULL,
 	scadenza date NOT NULL ,
 	PRIMARY KEY(numero,circuito,intestatario,scadenza),
@@ -81,10 +81,10 @@ CREATE TABLE Rid (
 CREATE TABLE MetodoDiPagamento (
 	numSmartCard numeric PRIMARY KEY,
 	versato numeric, 
-	numeroCarta numeric(10), 
+	numeroCarta numeric(16), 
 	intestatarioCarta varchar(30),		
 	circuitoCarta varchar(10),
-	scadenzaCarta date NOT NULL,
+	scadenzaCarta date,
 	codIban char(27), 
 	intestatarioConto varchar(30),
 	FOREIGN KEY(codIban,IntestatarioConto) 
@@ -512,7 +512,34 @@ RETURNS VOID AS $$
 		END IF;
 	END;
 $$
-LANGUAGE plpgsql
+LANGUAGE plpgsql;
 
-
-
+--insertMetodo
+CREATE OR REPLACE FUNCTION insertMetodo(numeric,numeric,varchar,varchar,date,char(27),varchar)
+RETURNS VOID AS $$
+DECLARE
+BEGIN
+	IF versato = NULL OR versato = 0
+	THEN
+		IF EXISTS (SELECT * from Carta,rid WHERE carta.numero = $2 OR rid.codiban = $6)
+		THEN 
+			INSERT INTO MetodoDiPagaento(versato,numeroCarta,intestatarioCarta,circuitoCarta,scadenzaCartadate,codIban,intestatarioConto)
+			VALUES ($1,$2,$3,$4,$5,$6,$7);
+		END IF; 
+		IF $2 != NULL AND $6 = NULL
+		THEN
+			INSERT INTO carta 
+			VALUES ($2,$3,$4,$5); 
+			INSERT INTO MetodoDiPagamento(versato,numeroCarta,intestatarioCarta,circuitoCarta,scadenzaCartadate,codIban,intestatarioConto)
+			VALUES ($1,$2,$3,$4,$5,$6,$7);
+		END IF;
+		IF  r.numerocarta = NULL AND r.codIban != NULL
+		THEN
+			INSERT INTO rid
+			VALUES ($6,$7);
+			INSERT INTO MetodoDiPagamento(versato,numeroCarta,intestatarioCarta,circuitoCarta,scadenzaCartadate,codIban,intestatarioConto)
+			VALUES ($1,$2,$3,$4,$5,$6,$7);
+		END IF;
+	END IF;
+END;
+$$ LANGUAGE plpgsql

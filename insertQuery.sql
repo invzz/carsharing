@@ -121,5 +121,8 @@ INSERT INTO utente VALUES
 ('mariorossi@libero.it',NULL,'RSSMRA74A01F205Z'),
 ('cartagiuseppe@gmail.com',NULL,'CRTGPP92A01G273F');
 
+/* MetodoDiPAgamento carta e iban*/
+SELECT insertMetodo((0,NULL,NULL,NULL,'IT83X0200801452000101755018','Andres Coronado'));
+
 
 /* Abbonamento */
