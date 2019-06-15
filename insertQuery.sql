@@ -63,12 +63,12 @@ SELECT insertDocumento('CA3476AV','2019-06-06','2029-06-06','data evangelist','G
 SELECT insertDocumento('GE2456EF','2019-02-14','2029-02-24','data evangelist','Giuseppe','Carta',true,'Palermo','1992-01-01','B','Italia','Genova',16138,134,'Via Emilia');
 SELECT insertDocumento('CA3576AV','2019-06-06','2029-06-06','Processor Architect','Gabriele','Addari',false,'Genova','1995-01-01',NULL,'Italia','Genova',16154,12,'Via Sestri');
 SELECT insertDocumento('GE2451EG','2019-12-29','2029-12-29','Processor Architect','Addari','Addari',true,'Genova','1995-01-01','B','Italia','Genova',16154,12,'Via Sestri');
-SELECT insertDocumento('CB3576EV','2015-06-06','2025-06-06','Psicologo','Veronica','Colleoni',false,'Bergamo','1989-01-01',NULL,'Italia','Genova',16128,17,'Mura Delle Grazie');
-SELECT insertDocumento('BG2457AF','2011-10-29','2021-10-29','Psicologo','Veronica','Colleoni',true,'Bergamo','1989-01-01','B','Italia','Genova',16128,17,'Mura Delle Grazie');
+SELECT insertDocumento('CB3576EV','2015-06-06','2025-06-06','Psicologo','Veronica','Colleoni',false,'Bergamo','1989-01-01',NULL,'Italia','Genova',16128,17,'Mura delle Grazie');
+SELECT insertDocumento('BG2457AF','2011-10-29','2021-10-29','Psicologo','Veronica','Colleoni',true,'Bergamo','1989-01-01','B','Italia','Genova',16128,17,'Mura delle Grazie');
 SELECT insertDocumento('CA3546DV','2019-06-06','2029-06-06','Idraulico','Mario','Rossi',false,'Milano','1974-01-01',NULL,'Italia','Genova',16121,1,'Piazza Caricamento');
 SELECT insertDocumento('MI2226EF','2019-12-29','2029-12-29','Idraulico','Mario','Rossi',true,'Milano','1974-01-01','C','Italia','Genova',16121,1,'Piazza Caricamento');
-SELECT insertDocumento('CA4576UV','2019-06-06','2029-06-06','Regista','Alice','Bianchi',false,'Rogoredo','1992-01-01',NULL,'Italia','Genova',16138,17,'Via Emilia');
-SELECT insertDocumento('MI2356UF','2019-12-29','2029-12-29','Regista','Alice','Bianchi',true,'Rogoredo','1992-01-01','B','Italia','Genova',16138,17,'Via Emilia');
+SELECT insertDocumento('CA4576UV','2019-06-06','2029-06-06','Regista','Alice','Bianchi',false,'Rogoredo','1992-01-01',NULL,'Italia','Genova',16138,134,'Via Emilia');
+SELECT insertDocumento('MI2356UF','2019-12-29','2029-12-29','Regista','Alice','Bianchi',true,'Rogoredo','1992-01-01','B','Italia','Genova',16138,134,'Via Emilia');
 
 
 /* referente */
@@ -90,29 +90,36 @@ INSERT INTO AZIENDA VALUES
 (00237148,'IBM RedHat','025582524','3336456785','Donald','Knuth','1982-01-01');
 
 /* conducente */
-INSERT INTO Conducente(piva,nrDocumento,nrPatente) VALUES (00237148,'CB3576EV','BG2457AF');
+INSERT INTO Conducente(piva,nrDocumento,nrPatente) VALUES (NULL,'CB3576EV','BG2457AF');
 INSERT INTO Conducente(piva,nrDocumento,nrPatente) VALUES (00007148,'CA4576UV','MI2356UF');
+INSERT INTO Conducente(piva,nrDocumento,nrPatente) VALUES (00205748,'CA3546DV','MI2226EF');
+INSERT INTO Conducente(piva,nrDocumento,nrPatente) VALUES (00237148,'CA2536AV','GE2456EG');
 
+/* persona (inserisce solo se conducente e persona sono coinquilini ), getid fornisce l'id del conducente*/
+SELECT insertPersona('CRNNRS84T29Z600A',getIdConducente('CB3576EV'), '3483794192','CA2536AV','GE2456EG');
+SELECT insertPersona('CRTGPP92A01G273F',getIdConducente('CA4576UV'), '3389565645','CA3476AV','GE2456EF');
+SELECT insertPersona('RSSMRA74A01F205Z',0, '3349585645','CA3546DV','MI2226EF');
+SELECT insertPersona('BNCLCA93A41F205I',0, '3329465645','CA4576UV','MI2356UF');
 
-INSERT INTO Persona VALUES 
-('CRNNRS84T29Z600A',select id_conducente FROM Conducente WHERE nrDocumento=, 3483794192,0,20,'CA2536AV','GE2456EG'),
-(3483794192,NULL,20,'CLLVNC89A41A794B','CB3576EV','BG2457AF'),
-(3483794192,NULL,20,'CRTGPP92A01G273F','CA3476AV','GE2456EF'),
-(3483794192,NULL,20,'DDRGRL95A01D969R','CA3576AV','GE2451EG'),
-(3483794192,NULL,20,'RSSMRA74A01F205Z','CA3546DV','MI2226EF'),
-(3483794192,NULL,20,'BNCLCA93A41F205I','CA4576UV','MI2356UF')
-;
-
-/* sede */
+/* sede : se l'indirizzo e` mancante lo registra nella tabella indirizzi */
 SELECT insertSede(00205748,'Italia','Milano',20100,12,'Via Trento','Legale');
 SELECT insertSede(00205748,'Italia','Genova',16162,1,'Via Bolzaneto','Operativa');
 SELECT insertSede(00205748,'Italia','Genova',16142,1,'Via Sampierdarena','Legale');
 SELECT insertSede(00205748,'Italia','Genova',16122,1,'Via Erzelli','Legale');
 
-
-/* Utente */
-/* Abbonamento */
 /*tipo abb.*/
 INSERT INTO Tipo VALUES('Annuale',150,130);
 INSERT INTO Tipo VALUES('Semestrale',90,80);
 INSERT INTO Tipo VALUES('Mensile',60,55);
+
+/* Utente */
+INSERT INTO utente VALUES 
+('info@leonardo.com',00205748,NULL),
+('info@rai.it',00007148,NULL),
+('info@redhat.org',00237148,NULL),
+('invizuz@gmail.com',NULL,'CRNNRS84T29Z600A'),
+('mariorossi@libero.it',NULL,'RSSMRA74A01F205Z'),
+('cartagiuseppe@gmail.com',NULL,'CRTGPP92A01G273F');
+
+
+/* Abbonamento */

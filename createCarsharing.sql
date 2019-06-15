@@ -330,17 +330,16 @@ CREATE TABLE Utente (
 	piva integer REFERENCES Azienda 
 	ON UPDATE CASCADE	
 	ON DELETE CASCADE,
-	codfisc char(11) REFERENCES Persona 
+	codfisc char(16) REFERENCES Persona 
 	ON DELETE CASCADE
-	ON UPDATE CASCADE
+	ON UPDATE CASCADE,
+	CHECK (email ~ '^[a-zA-Z0-9.!#$%&''*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$')
 );
-/** Funzioni utili per l'inserimento **/
-
-SET search_path TO carsharing;
 
 --insertParcheggio: 
-CREATE FUNCTION insertParcheggio(varchar(20),numeric,varchar(20),numeric(14,7),numeric(14,7),
-				/* indirizzo */varchar(20),varchar(20),numeric(5,0),numeric(4,0),varchar(20)) 
+CREATE OR REPLACE 
+FUNCTION insertParcheggio(varchar(20),numeric,varchar(20),numeric(14,7),numeric(14,7),
+		   /* indirizzo */varchar(20),varchar(20),numeric(5,0),numeric(4,0),varchar(20)) 
 RETURNS VOID AS $$
 DECLARE 
 	BEGIN
@@ -362,7 +361,8 @@ $$ LANGUAGE plpgsql ;
 
 
 --insertDocumento
-CREATE FUNCTION insertDocumento(
+CREATE OR REPLACE 
+FUNCTION insertDocumento(
 	nrDocumento varchar(10),rilascio date,scadenza date,professione varchar(30),nome varchar(10),
 	cognome varchar (15),isPatente bool ,luogoDiNascita varchar(20), dataDiNascita date,
 	CategoriaPatente char(1),nazione1 varchar(20), citta1 varchar(20), cap1 numeric(5,0),
@@ -388,13 +388,13 @@ CREATE FUNCTION insertDocumento(
 								 nazione1,citta1,cap1,civico1,via1);
 		END IF;
 	END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql; 
 
 --insertSede
-
-CREATE FUNCTION insertSede(	piva numeric(11),nazione1 varchar(20) ,
-							citta1 varchar(20),cap1 numeric(5,0),civico1 numeric(4,0) ,
-							via1 varchar(20),tipoSede1 varchar(9))
+CREATE OR REPLACE 
+FUNCTION insertSede(piva numeric(11),nazione1 varchar(20) ,
+					citta1 varchar(20),cap1 numeric(5,0),civico1 numeric(4,0) ,
+					via1 varchar(20),tipoSede1 varchar(9))
 
 	RETURNS VOID AS $$ 
 	BEGIN
@@ -414,6 +414,7 @@ CREATE FUNCTION insertSede(	piva numeric(11),nazione1 varchar(20) ,
 	END;
 $$ LANGUAGE plpgsql;
 
+
 --isSameAddres controlla se due persone Vivono insieme
 CREATE OR REPLACE 
 FUNCTION isSameAddress(nrPatCond varchar(10), nrDocPer varchar(10))
@@ -423,49 +424,91 @@ FUNCTION isSameAddress(nrPatCond varchar(10), nrDocPer varchar(10))
 		ind2 record;
 
 	BEGIN
-		SELECT * FROM Documento
+		SELECT nazione,citta,cap,civico,via FROM Documento
 		natural join indirizzo 
 		INTO ind1
-		WHERE Documento.nrDocuemento = nrPatCond;
+		WHERE Documento.nrDocumento = nrPatCond;
 		
-		SELECT * FROM Documento
+		SELECT nazione,citta,cap,civico,via FROM Documento
 		natural join indirizzo 
 		INTO ind2
-		WHERE Documento.nrDocuemento = nrDocPer;
+		WHERE Documento.nrDocumento = nrDocPer;
 		
-		IF ind1 = ind2
+		IF 		ind1.nazione = ind2.nazione 
+		AND		ind1.citta = ind2.citta
+		AND		ind1.cap = ind2.cap
+		AND		ind1.civico = ind2.civico
+		AND		ind1.via = ind2.via
+			
 		THEN
+			RAISE NOTICE 'Same addres...ok (%),(%)',ind1,ind2;
 			RETURN true;
 		ELSE 
+			RAISE NOTICE 'Same addres...false (%),(%)',ind1,ind2;
 			RETURN false;
 		END IF;
 	END;
 $$ LANGUAGE plpgsql;
 
 --getIdConducente 
+CREATE OR REPLACE
+FUNCTION getIdConducente(_param_id varchar(10))
+RETURNS int AS $$
+DECLARE
+BEGIN
+	RETURN (SELECT id_conducente FROM conducente WHERE nrDocumento = _param_id);
+END;
+$$ LANGUAGE plpgsql;
+
+--CalcolaEta
+CREATE OR REPLACE 
+FUNCTION calcolaEta(date)
+RETURNS int as $$
+DECLARE
+
+BEGIN
+
+	RETURN (SELECT EXTRACT(YEAR FROM age($1)));
+END;
+$$ LANGUAGE plpgsql;
+
 
 -- InsertPersona Controlla che un conducente che non sia conducente per una azienda abiti insieme alla persona
 CREATE OR REPLACE 
-FUNCTION insertPersona(id_conducente1 int,piva numeric(11), nrDocumento1 varchar(10),nrPatente varchar (10))
+FUNCTION insertPersona(codFisc char(16) ,id_conducente1 int, telefono varchar(11), nrDocumento1 varchar(10),nrPatente varchar(10))
 RETURNS VOID AS $$
 	DECLARE
-		idDocCon int;
+		docConduc varchar(10);
+		datanascita date;
 	BEGIN
-		SELECT id_conducente
-		FROM conducente
-		INTO idDocCon
-		WHERE nrDocumento = nrDocumento1;
-		IF piva = NULL
-		THEN
-			IF isSameAddress(nrPatente,DocConduc)
+		
+		SELECT nrDocumento
+		INTO docConduc
+		FROM conducente 
+		WHERE id_conducente = id_conducente1;
+		
+		SELECT documento.datadinascita 
+		INTO datanascita
+		FROM Documento
+		WHERE documento.nrdocumento = nrDocumento1;
+		
+		IF id_conducente1 = 0 
+		THEN 
+			RAISE NOTICE 'nessun conducente aggiuntivo per (%)',codFisc;
+			INSERT INTO Persona VALUES (codFisc, NULL, telefono ,calcolaEta(datanascita) , nrDocumento1 , nrPatente); 
+		RETURN;
+		END IF;
+		
+		IF docConduc = NULL
+			THEN
+				INSERT INTO Persona VALUES (codFisc, id_conducente1, telefono ,calcolaEta(datanascita) , nrDocumento1 , nrPatente); 
+			ELSE IF isSameAddress(nrPatente,docConduc)
 			THEN 
-			INSERT INTO Persona (id_conducente ,piva , nrDocumento ,nrPatente)  VALUES (piva , nrDocumento1 ,nrPatente  );  
+				INSERT INTO Persona VALUES (codFisc, id_conducente1, telefono ,calcolaEta(datanascita) , nrDocumento1 , nrPatente);  
 			ELSE
-			RAISE EXCEPTION 'Inserimento abortito '
-      		USING HINT = 'Il conducente scelto non Abita insieme alla Persona !';
+				RAISE EXCEPTION 'Inserimento abortito '
+				USING HINT = 'Il conducente scelto non Abita insieme o non esistente';
 			END IF;
-		ELSE
-		INSERT INTO Persona (id_conducente ,piva , nrDocumento ,nrPatente)  VALUES (piva , nrDocumento1 ,nrPatente  );  
 		END IF;
 	END;
 $$
