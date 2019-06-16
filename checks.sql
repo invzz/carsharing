@@ -1,6 +1,6 @@
 SET search_path TO carsharing;
 /*commentato per test*/
---ALTER TABLE prenotazione ADD CHECK(NOW()::timestamp <= prenotazione.dataorainizio - interval '15 min');
+--ALTER TABLE prenotazione ADD CHECK(NOW()::timestamp <= prenotazione.dataorainizio - interval '15 min'); /* trigger */
 ALTER TABLE prenotazione ADD CHECK(dataOraFine >= prenotazione.dataorainizio + interval '1 day'); /* prenotazione minima un giorno*/
 ALTER TABLE Modello ADD CHECK(lunghezza > 1000);
 ALTER TABLE Modello ADD CHECK(larghezza > 1000);
