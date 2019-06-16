@@ -34,10 +34,6 @@ CREATE TABLE Modello (
 	REFERENCES Categoria
 	ON DELETE NO ACTION
 	ON UPDATE NO ACTION
-	CHECK(lunghezza > 1000),
-	CHECK(larghezza > 1000),
-	CHECK(Nporte > 2 AND Nporte <= 5),
-	CHECK(velocita BETWEEN 50 AND 230 ),
 	aria bool NULL,
 	servoS bool NULL,
 	airBag bool NULL
@@ -69,8 +65,7 @@ CREATE TABLE Carta (
 	intestatario varchar(30) NOT NULL,
 	scadenza date NOT NULL ,
 	PRIMARY KEY(numero,circuito,intestatario,scadenza),
-	CHECK(scadenza>NOW() + interval '1 month'),
-	CHECK(numero > 0)
+	
 );
 
 CREATE TABLE Rid (
@@ -110,9 +105,9 @@ CREATE TABLE Abbonamento (
 	tipo varchar(20) NOT NULL references Tipo,
 	PRIMARY KEY (numSmartCard),
 	UNIQUE (numSmartCard, dataInizio),
-	CHECK( datafine > datainizio),
-	CHECK(BonusRottamazione <= 100)
+	
 );
+
 CREATE TABLE Parcheggio (
 	NomeParcheggio varchar(20) PRIMARY KEY,
 	numPosti numeric NOT NULL,
@@ -145,7 +140,6 @@ CREATE TABLE Vettura (
 	animali bool NOT NULL,
 	modello varchar(20) REFERENCES Modello,
 	sede varchar(20) REFERENCES Parcheggio
-	CHECK (targa ~ $$[A-Za-z]{2}[0-9]{3}[A-Za-z]{2}$$)
 );
 
 
@@ -161,8 +155,7 @@ CREATE TABLE Prenotazione (
 		ON UPDATE NO ACTION,
 	FOREIGN KEY(numSmartCard)
 		REFERENCES Abbonamento(numSmartCard),
-	CHECK(NOW()::timestamp <= prenotazione.dataorainizio - interval '15 min'),
-	CHECK(dataOraFine >= prenotazione.dataorainizio + interval '1 day') /* prenotazione minima un giorno*/
+	
 );
 
 CREATE TABLE ModificaPrenotazione(
@@ -179,7 +172,7 @@ CREATE TABLE Rifornimenti (
 	data date NOT NULL,
 	litri numeric NOT NULL,
 	PRIMARY KEY (chilometraggio,targa),
-	CHECK(litri < 100)
+	
 );
 
 CREATE TABLE Utilizzo (
@@ -192,9 +185,7 @@ CREATE TABLE Utilizzo (
 	dataOraRiconsegna timestamp NULL,
 	chilometraggioRiconsegna numeric(6,0),
 	PRIMARY KEY (NumeroPrenotazione,dataOraRitiro),
-	CHECK(dataOraRitiro < dataOraRiconsegna 
-			AND dataOraRitiro < dataOraRiconsegna 
-			AND chilometraggioRitiro < chilometraggioRiconsegna)
+	
 );
 
 
@@ -207,7 +198,7 @@ CREATE TABLE Sinistro (
 	conducente varchar (40) NOT NULL,
 	luogo varchar (100) NOT NULL,
 	PRIMARY KEY (numeroPrenotazione, dataOra),
-	CHECK (dataOra > now() - interval '10 day')
+	
 );
 /*sinistro notificato entro 10 giorni*/
 
@@ -217,7 +208,7 @@ CREATE TABLE Testimoni (
 	cognome varchar(15) NOT NULL,
 	dataDiNascita date NOT NULL,
 	luogoDiNascita varchar(20) NOT NULL,
-	CHECK (dataDiNascita < now() - interval '18 year' )	
+	
 );
 
 
@@ -256,7 +247,7 @@ CREATE TABLE Rappresentante (
 	dataDiNascita date,
 	luogoDiNascita	varchar(20) NOT NULL,
 	PRIMARY KEY(nome,cognome, dataDiNascita),
-	CHECK (dataDiNascita < now() - interval '18 year') 
+	
 );
 
 CREATE TABLE Azienda (
@@ -267,7 +258,7 @@ CREATE TABLE Azienda (
 	nomeRappresentante varchar(10) NOT NULL,
 	cognomeRappresentante varchar(15) NOT NULL,
 	dataDiNascitaRappresentante date NOT NULL,
-	CHECK (piva != 0)
+	
 );
 
 CREATE TABLE Sede(
@@ -283,7 +274,7 @@ CREATE TABLE Sede(
 		REFERENCES Indirizzo (nazione,citta,cap,via,civico)	
 		ON DELETE CASCADE
 		ON UPDATE CASCADE,
-	CHECK (tiposede = 'Legale' or tiposede = 'Operativa')
+	
 );
 /* trigger una azienda non puo avere piu di 1 sede di tipo legale */
 
@@ -307,7 +298,7 @@ CREATE TABLE Documento (
 	REFERENCES 	Indirizzo (nazione,citta, cap, civico, via)
 		ON DELETE CASCADE
 		ON UPDATE CASCADE,
-	CHECK (dataDiNascita < now() - interval '18 year') 
+	 
 );
 
 CREATE TABLE Conducente (
