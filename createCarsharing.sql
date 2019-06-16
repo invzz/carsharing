@@ -33,7 +33,7 @@ CREATE TABLE Modello (
 	categoria  varchar (20) NOT NULL 
 	REFERENCES Categoria
 	ON DELETE NO ACTION
-	ON UPDATE NO ACTION
+	ON UPDATE NO ACTION,
 	aria bool NULL,
 	servoS bool NULL,
 	airBag bool NULL
@@ -64,7 +64,7 @@ CREATE TABLE Carta (
 	circuito varchar(16) NOT NULL,
 	intestatario varchar(30) NOT NULL,
 	scadenza date NOT NULL ,
-	PRIMARY KEY(numero,circuito,intestatario,scadenza),
+	PRIMARY KEY(numero,circuito,intestatario,scadenza)
 	
 );
 
@@ -104,7 +104,7 @@ CREATE TABLE Abbonamento (
 	numSmartCard integer NOT NULL references MetodoDiPagamento,
 	tipo varchar(20) NOT NULL references Tipo,
 	PRIMARY KEY (numSmartCard),
-	UNIQUE (numSmartCard, dataInizio),
+	UNIQUE (numSmartCard, dataInizio)
 	
 );
 
@@ -154,7 +154,7 @@ CREATE TABLE Prenotazione (
 		ON DELETE NO ACTION
 		ON UPDATE NO ACTION,
 	FOREIGN KEY(numSmartCard)
-		REFERENCES Abbonamento(numSmartCard),
+		REFERENCES Abbonamento(numSmartCard)
 	
 );
 
@@ -171,7 +171,7 @@ CREATE TABLE Rifornimenti (
 	chilometraggio numeric,	
 	data date NOT NULL,
 	litri numeric NOT NULL,
-	PRIMARY KEY (chilometraggio,targa),
+	PRIMARY KEY (chilometraggio,targa)
 	
 );
 
@@ -184,7 +184,7 @@ CREATE TABLE Utilizzo (
 	dataOraRitiro timestamp NOT NULL,
 	dataOraRiconsegna timestamp NULL,
 	chilometraggioRiconsegna numeric(6,0),
-	PRIMARY KEY (NumeroPrenotazione,dataOraRitiro),
+	PRIMARY KEY (NumeroPrenotazione,dataOraRitiro)
 	
 );
 
@@ -197,7 +197,7 @@ CREATE TABLE Sinistro (
 	dinamica varchar NOT NULL,	
 	conducente varchar (40) NOT NULL,
 	luogo varchar (100) NOT NULL,
-	PRIMARY KEY (numeroPrenotazione, dataOra),
+	PRIMARY KEY (numeroPrenotazione, dataOra)
 	
 );
 /*sinistro notificato entro 10 giorni*/
@@ -207,7 +207,7 @@ CREATE TABLE Testimoni (
 	nome varchar(10) NOT NULL,
 	cognome varchar(15) NOT NULL,
 	dataDiNascita date NOT NULL,
-	luogoDiNascita varchar(20) NOT NULL,
+	luogoDiNascita varchar(20) NOT NULL
 	
 );
 
@@ -246,7 +246,7 @@ CREATE TABLE Rappresentante (
 	cognome	varchar(15),
 	dataDiNascita date,
 	luogoDiNascita	varchar(20) NOT NULL,
-	PRIMARY KEY(nome,cognome, dataDiNascita),
+	PRIMARY KEY(nome,cognome, dataDiNascita)
 	
 );
 
@@ -257,7 +257,7 @@ CREATE TABLE Azienda (
 	telefonoReferente varchar(10) REFERENCES Referente NOT NULL,
 	nomeRappresentante varchar(10) NOT NULL,
 	cognomeRappresentante varchar(15) NOT NULL,
-	dataDiNascitaRappresentante date NOT NULL,
+	dataDiNascitaRappresentante date NOT NULL
 	
 );
 
@@ -273,7 +273,7 @@ CREATE TABLE Sede(
 	FOREIGN KEY(nazione,citta,cap,via,civico) 
 		REFERENCES Indirizzo (nazione,citta,cap,via,civico)	
 		ON DELETE CASCADE
-		ON UPDATE CASCADE,
+		ON UPDATE CASCADE
 	
 );
 /* trigger una azienda non puo avere piu di 1 sede di tipo legale */
@@ -297,8 +297,7 @@ CREATE TABLE Documento (
 	FOREIGN KEY (nazione,citta,	cap, civico, via) 
 	REFERENCES 	Indirizzo (nazione,citta, cap, civico, via)
 		ON DELETE CASCADE
-		ON UPDATE CASCADE,
-	 
+		ON UPDATE CASCADE
 );
 
 CREATE TABLE Conducente (
@@ -320,8 +319,8 @@ CREATE TABLE Persona (
 	telefono varchar(11) NOT NULL,
 	eta numeric, /* calcolato automaticamente */
 	nrDocumento varchar(10) NOT NULL references Documento,
-	nrPatente varchar(10) NOT NULL references Documento,
-	CHECK (eta >= 18)
+	nrPatente varchar(10) NOT NULL references Documento
+	
 );
 /* numeri italiani 10 cifre nb */
 
@@ -333,8 +332,7 @@ CREATE TABLE Utente (
 	codfisc char(16) REFERENCES Persona 
 	ON DELETE CASCADE
 	ON UPDATE CASCADE,
-	numSmartCard int REFERENCES MetodoDiPagamento,
-	CHECK (email ~ '^[a-zA-Z0-9.!#$%&''*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$')
+	numSmartCard int REFERENCES MetodoDiPagamento
 );
 
 /** Funzioni utili per l'inserimento **/
