@@ -164,3 +164,10 @@ INSERT INTO prenotazione VALUES (nextval('prenotazione_numeroprenotazione_seq'::
 INSERT INTO prenotazione VALUES (nextval('prenotazione_numeroprenotazione_seq'::regclass),'5','Massimo','2019-08-01','2019-08-28',NULL);
 INSERT INTO prenotazione VALUES (nextval('prenotazione_numeroprenotazione_seq'::regclass),'6','Piero','2019-07-20','2019-08-22',NULL);
 INSERT INTO prenotazione VALUES (nextval('prenotazione_numeroprenotazione_seq'::regclass),'6','Paola','2019-08-18','2019-08-25',NULL);
+
+/* modifica prenotazione */
+INSERT INTO carsharing.modificaprenotazione VALUES (10, '2019-06-28 00:00:00', '2019-07-02 00:00:00', '2019-07-05 00:00:00');
+INSERT INTO carsharing.modificaprenotazione VALUES (16, '2019-07-01 00:00:00', '2019-07-10 00:00:00', '2019-07-28 00:00:00');
+INSERT INTO carsharing.modificaprenotazione VALUES (20, '2019-06-20 00:00:00', '2019-07-22 00:00:00', '2019-07-28 00:00:00');
+INSERT INTO carsharing.modificaprenotazione VALUES (17, '2019-07-01 00:00:00', '2019-07-05 00:00:00', '2019-08-01 00:00:00');
+
