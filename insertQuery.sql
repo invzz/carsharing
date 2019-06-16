@@ -150,3 +150,17 @@ SELECT insertAbbonamento(now()::timestamp,NULL,0,1324,3,'Annuale');
 SELECT insertAbbonamento(now()::timestamp,NULL,0,4123,4,'Annuale');
 SELECT insertAbbonamento(now()::timestamp,now()::date,15,2341,5,'Annuale');
 SELECT insertAbbonamento(now()::timestamp,now()::date,15,3412,6,'Annuale');
+
+/* prenotazione */
+INSERT INTO prenotazione VALUES (nextval('prenotazione_numeroprenotazione_seq'::regclass),'1','Andrea','2019-07-01','2019-07-03',NULL);
+INSERT INTO prenotazione VALUES (nextval('prenotazione_numeroprenotazione_seq'::regclass),'1','Danilo','2019-07-11','2019-07-13',NULL);
+INSERT INTO prenotazione VALUES (nextval('prenotazione_numeroprenotazione_seq'::regclass),'2','Gabriele','2019-07-04','2019-07-20',NULL);
+INSERT INTO prenotazione VALUES (nextval('prenotazione_numeroprenotazione_seq'::regclass),'2','Gino','2019-08-01','2019-08-08',NULL);
+INSERT INTO prenotazione VALUES (nextval('prenotazione_numeroprenotazione_seq'::regclass),'3','Laura','2019-07-03','2019-07-05',NULL);
+INSERT INTO prenotazione VALUES (nextval('prenotazione_numeroprenotazione_seq'::regclass),'3','Luca','2019-07-06','2019-08-07',NULL);
+INSERT INTO prenotazione VALUES (nextval('prenotazione_numeroprenotazione_seq'::regclass),'4','Marco','2019-07-01','2019-08-01',NULL);
+INSERT INTO prenotazione VALUES (nextval('prenotazione_numeroprenotazione_seq'::regclass),'4','Mario','2019-07-05','2019-07-22',NULL);
+INSERT INTO prenotazione VALUES (nextval('prenotazione_numeroprenotazione_seq'::regclass),'5','Anrea','2019-08-01','2019-08-02',NULL);
+INSERT INTO prenotazione VALUES (nextval('prenotazione_numeroprenotazione_seq'::regclass),'5','Massimo','2019-08-01','2019-08-28',NULL);
+INSERT INTO prenotazione VALUES (nextval('prenotazione_numeroprenotazione_seq'::regclass),'6','Piero','2019-07-20','2019-08-22',NULL);
+INSERT INTO prenotazione VALUES (nextval('prenotazione_numeroprenotazione_seq'::regclass),'6','Paola','2019-08-18','2019-08-25',NULL);

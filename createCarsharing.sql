@@ -161,8 +161,8 @@ CREATE TABLE Prenotazione (
 		ON UPDATE NO ACTION,
 	FOREIGN KEY(numSmartCard)
 		REFERENCES Abbonamento(numSmartCard),
-	CHECK(NOW()::timestamp > prenotazione.dataorainizio - interval '15 min'),
-	CHECK(dataOraFine > prenotazione.dataorainizio + interval '1 day') /* prenotazione minima un giorno*/
+	CHECK(NOW()::timestamp <= prenotazione.dataorainizio - interval '15 min'),
+	CHECK(dataOraFine >= prenotazione.dataorainizio + interval '1 day') /* prenotazione minima un giorno*/
 );
 
 CREATE TABLE ModificaPrenotazione(
