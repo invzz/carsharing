@@ -108,7 +108,8 @@ CREATE TABLE Abbonamento (
 	pinCarta	numeric(4,0) NOT NULL,
 	numSmartCard integer NOT NULL references MetodoDiPagamento,
 	tipo varchar(20) NOT NULL references Tipo,
-	PRIMARY KEY (dataInizio,numSmartCard),
+	PRIMARY KEY (numSmartCard),
+	UNIQUE (numSmartCard, dataInizio),
 	CHECK( datafine > datainizio),
 	CHECK(BonusRottamazione <= 100)
 );
@@ -143,28 +144,34 @@ CREATE TABLE Vettura (
 	colore varchar(20) NOT NULL,
 	animali bool NOT NULL,
 	modello varchar(20) REFERENCES Modello,
-	sede varchar(20) references Parcheggio
+	sede varchar(20) REFERENCES Parcheggio
 	CHECK (targa ~ $$[A-Za-z]{2}[0-9]{3}[A-Za-z]{2}$$)
 );
 
 
 CREATE TABLE Prenotazione (
 	NumeroPrenotazione serial PRIMARY KEY,
-	dataOraRinuncia timestamp,
-	nuovaDataOraRest timestamp,
+	numSmartCard int NOT NULL, 
+	NomeVettura varchar(10) REFERENCES Vettura,
 	dataOraInizio timestamp NOT NULL,
 	dataOraFine timestamp NOT NULL,
-	dataInizio date NOT NULL,
-	numSmartCard int, 
-	NomeVettura varchar(10) REFERENCES Vettura,
 	numeroFattura int
 		REFERENCES Fatturazione
 		ON DELETE NO ACTION
 		ON UPDATE NO ACTION,
-	FOREIGN KEY(numSmartCard, dataInizio)
-		REFERENCES Abbonamento(numSmartCard, dataInizio)
+	FOREIGN KEY(numSmartCard)
+		REFERENCES Abbonamento(numSmartCard),
+	CHECK(NOW()::timestamp > prenotazione.dataorainizio - interval '15 min'),
+	CHECK(dataOraFine > prenotazione.dataorainizio + interval '1 day') /* prenotazione minima un giorno*/
 );
 
+CREATE TABLE ModificaPrenotazione(
+	NumeroPrenotazione int REFERENCES Prenotazione,
+	dataOraRinuncia timestamp,
+	nuovaDataOraInizio timestamp,
+	nuovaDataOraRest timestamp,
+	PRIMARY KEY(NumeroPrenotazione)
+);
 
 CREATE TABLE Rifornimenti (
 	targa varchar(7) references Vettura(targa),
@@ -521,42 +528,12 @@ RETURNS VOID AS $$
 $$
 LANGUAGE plpgsql;
 
---insertMetodo
-CREATE OR REPLACE FUNCTION insertMetodo(int,numeric,numeric,varchar,varchar,date,char(27),varchar)
-RETURNS VOID AS $$
-DECLARE
-BEGIN
-	IF $1 = NULL OR $1 = 0
-	THEN
-		IF EXISTS (SELECT * from Carta,rid WHERE carta.numero = $2 OR rid.codiban = $6)
-		THEN 
-			INSERT INTO MetodoDiPagaento(versato,numeroCarta,intestatarioCarta,circuitoCarta,scadenzaCarta,codIban,intestatarioConto)
-			VALUES ($1,$2,$3,$4,$5,$6,$7,$8);
-		END IF; 
-		IF $2 != NULL AND $6 = NULL
-		THEN
-			INSERT INTO carta 
-			VALUES ($3,$4,$5,$6); 
-			INSERT INTO MetodoDiPagamento(numsmartcard,versato,numeroCarta,intestatarioCarta,circuitoCarta,scadenzaCarta,codIban,intestatarioConto)
-			VALUES ($1,$2,$3,$4,$5,$6,$7,$8);
-		END IF;
-		IF  $2 = NULL AND $6 != NULL
-		THEN
-			INSERT INTO rid
-			VALUES ($7,$8);
-			INSERT INTO MetodoDiPagamento(numsnartcard,versato,numeroCarta,intestatarioCarta,circuitoCarta,scadenzaCarta,codIban,intestatarioConto)
-			VALUES ($1,$2,$3,$4,$5,$6,$7,$8);
-		END IF;
-	END IF;
-END;
-$$ LANGUAGE plpgsql;
-
 /*overload carta shorcut */
 CREATE OR REPLACE FUNCTION insertMetodo(card int, num numeric,inte varchar,circ varchar,scad date)
 RETURNS VOID AS $$
 BEGIN
 	INSERT INTO carta(numero,circuito,intestatario,scadenza) VALUES (num, circ, inte, scad);
-	INSERT INTO MetodoDiPagamento(numeroCarta,IntestatarioCarta,circuitoCarta,scadenzaCarta) VALUES (num,inte,circ,scad);
+	INSERT INTO MetodoDiPagamento(numsmartcard,numeroCarta,IntestatarioCarta,circuitoCarta,scadenzaCarta) VALUES (card,num,inte,circ,scad);
 END;
 $$ LANGUAGE plpgsql;
 
