@@ -160,7 +160,7 @@ INSERT INTO prenotazione VALUES (nextval('prenotazione_numeroprenotazione_seq'::
 INSERT INTO prenotazione VALUES (nextval('prenotazione_numeroprenotazione_seq'::regclass),'3','Luca','2019-07-06','2019-08-07',NULL);
 INSERT INTO prenotazione VALUES (nextval('prenotazione_numeroprenotazione_seq'::regclass),'4','Marco','2019-07-01','2019-08-01',NULL);
 INSERT INTO prenotazione VALUES (nextval('prenotazione_numeroprenotazione_seq'::regclass),'4','Mario','2019-07-05','2019-07-22',NULL);
-INSERT INTO prenotazione VALUES (nextval('prenotazione_numeroprenotazione_seq'::regclass),'5','Anrea','2019-08-01','2019-08-02',NULL);
+INSERT INTO prenotazione VALUES (nextval('prenotazione_numeroprenotazione_seq'::regclass),'5','Andrea','2019-08-01','2019-08-02',NULL);
 INSERT INTO prenotazione VALUES (nextval('prenotazione_numeroprenotazione_seq'::regclass),'5','Massimo','2019-08-01','2019-08-28',NULL);
 INSERT INTO prenotazione VALUES (nextval('prenotazione_numeroprenotazione_seq'::regclass),'6','Piero','2019-07-20','2019-08-22',NULL);
 INSERT INTO prenotazione VALUES (nextval('prenotazione_numeroprenotazione_seq'::regclass),'6','Paola','2019-08-18','2019-08-25',NULL);
