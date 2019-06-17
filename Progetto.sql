@@ -262,8 +262,9 @@ CREATE TABLE Azienda (
 	telefonoReferente varchar(10) REFERENCES Referente NOT NULL,
 	nomeRappresentante varchar(10) NOT NULL,
 	cognomeRappresentante varchar(15) NOT NULL,
-	dataDiNascitaRappresentante date NOT NULL
-	
+	dataDiNascitaRappresentante date NOT NULL,
+	FOREIGN KEY (nomerappresentante,cognomerappresentante,datadinascitarappresentante) 
+	REFERENCES rappresentante
 );
 
 CREATE TABLE Sede(
@@ -772,11 +773,11 @@ INSERT INTO carsharing.modificaprenotazione VALUES (14, '2018-06-28', '2018-07-1
 INSERT INTO carsharing.modificaprenotazione VALUES (15, '2018-07-01', '2018-07-01', '2019-07-21');
 
 /* UTILIZZO CON CASI DI TEST*/
-INSERT INTO carsharing.utilizzo VALUES (13, 2000, '2019-07-01 00:00:00', '2019-07-05 00:00:00', 2750);
-INSERT INTO carsharing.utilizzo VALUES (14, 7500, '2017-07-16 00:00:00', '2017-07-18 00:00:00', 7750);
-INSERT INTO carsharing.utilizzo VALUES (15, 2000, '2018-07-01 00:00:00', '2018-07-21 00:00:00', 3500);
-INSERT INTO carsharing.utilizzo VALUES (16, 1500, '2018-08-01 00:00:00', '2018-08-01 00:00:00', 1680);
-INSERT INTO carsharing.utilizzo VALUES (17, 5450, '2018-07-03 00:00:00', '2018-07-17 00:00:00', 6850);
+--INSERT INTO carsharing.utilizzo VALUES (13, 2000, '2019-07-01 00:00:00', '2019-07-05 00:00:00', 2750);
+--INSERT INTO carsharing.utilizzo VALUES (14, 7500, '2017-07-16 00:00:00', '2017-07-18 00:00:00', 7750);
+--INSERT INTO carsharing.utilizzo VALUES (15, 2000, '2018-07-01 00:00:00', '2018-07-21 00:00:00', 3500);
+--INSERT INTO carsharing.utilizzo VALUES (16, 1500, '2018-08-01 00:00:00', '2018-08-01 00:00:00', 1680);
+--INSERT INTO carsharing.utilizzo VALUES (17, 5450, '2018-07-03 00:00:00', '2018-07-17 00:00:00', 6850);
 
 --funzioni di supporto alle funzioni dei trigger
 
@@ -981,15 +982,13 @@ BEGIN
 			   NATURAL JOIN prenotazione
                WHERE prenotazione.numeroprenotazione = new.numeroprenotazione
 			   )
-			   
 		THEN 
-			SELECT  modificaprenotazione.nuovadataorainizio,	
-					modificaprenotazione.nuovadataorarest, 
-					modificaprenotazione.dataorarinuncia
+			SELECT modificaprenotazione.nuovadataorainizio,	
+				   modificaprenotazione.nuovadataorarest, 
+				   modificaprenotazione.dataorarinuncia
 				INTO modificainizio , modificafine, rinuncia
 			   	FROM modificaprenotazione
-			   	NATURAL JOIN prenotazione
-               	WHERE prenotazione.numeroprenotazione = new.numeroprenotazione;
+			   	WHERE modificaprenotazione.numeroprenotazione = new.numeroprenotazione;
 	
 	--se la modificaprenotazione non ha data e` un annullamento
 		ELSE
@@ -1021,9 +1020,11 @@ BEGIN
 		penale=0;
 	END IF;
 	--emetto fattura con la tariffazzione calcolata
-	SELECT emettiFattura(penale,calc, new.chilometraggioriconsegna-new.chilometraggioritiro,
+	perform emettiFattura(penale,calc, new.chilometraggioriconsegna-new.chilometraggioritiro,
 				 ((fine-inizio)-(new.dataorariconsegna-new.dataoraritiro)),
 				 new.dataorariconsegna-new.dataoraritiro, tempoAnnullato);
+				 
+	RETURN NEW;
 	END;
 $calcFatt$ LANGUAGE plpgsql;
 
@@ -1040,12 +1041,17 @@ BEGIN
 	FROM prenotazione 
 	WHERE new.numeroprenotazione = prenotazione.numeroprenotazione;
 	IF EXISTS (SELECT modificaprenotazione.nuovadataorainizio
-			   --INTO modifica
 			   FROM modificaprenotazione
 			   NATURAL JOIN prenotazione
 			   WHERE new.numeroprenotazione = prenotazione.numeroprenotazione 	
 			  )
-		THEN 
+		THEN
+		SELECT modificaprenotazione.nuovadataorainizio
+			   INTO modifica
+			   FROM modificaprenotazione
+			   NATURAL JOIN prenotazione
+			   WHERE new.numeroprenotazione = prenotazione.numeroprenotazione; 	
+	
 		    -- prenotazione modificata
 			prenotazione = modifica;
 	END IF;
@@ -1120,6 +1126,7 @@ CREATE TRIGGER calcFatt AFTER INSERT OR UPDATE ON Utilizzo
 FOR EACH ROW EXECUTE PROCEDURE calcFatt();
 
 /* UTILIZZO CON CASI DI TEST*/
+TRUNCATE utilizzo;
 INSERT INTO carsharing.utilizzo VALUES (13, 2000, '2019-07-05 00:00:00', '2019-07-15 00:00:00', 2750);
 
 --Some Checks!
