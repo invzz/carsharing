@@ -51,8 +51,8 @@ CREATE TABLE Fatturazione (
 	chilometriPercorsi numeric, 
 	TempoNonUsufruito numeric,
 	TempoUsufruito numeric,
-	TempoAnnullato numeric,
-	CHECK(TempoUsufruito + TempoNonUsufruito > 0)
+	TempoAnnullato numeric
+	--CHECK(TempoUsufruito + TempoNonUsufruito > 0)
 );
 /* check TempoUsufruito + TempoNonUsufruito > 0 */
 /* trigger TempoAnnullato > 0 ==> TempoNonUsufruito > 0*/
@@ -782,28 +782,10 @@ INSERT INTO carsharing.utilizzo VALUES (17, 5450, '2018-07-03 00:00:00', '2018-0
 
 -- overload timestamp
 CREATE OR REPLACE 
-FUNCTION cmpdates(timestamp,timestamp)
-	RETURNS interval AS $BODY$
-	BEGIN
-		RETURN 	$2-$1::interval;
-	END;		
-$BODY$ LANGUAGE plpgsql;
-
---overload date
-CREATE OR REPLACE 
-FUNCTION cmpdates(date,date)
-	RETURNS interval AS $BODY$
-	BEGIN
-		RETURN 	$1-$2::interval;
-	END;		
-$BODY$ LANGUAGE plpgsql;
-
--- overload timestamp
-CREATE OR REPLACE 
-FUNCTION leqDay(timestamp,timestamp)
+FUNCTION leqDay(timestamp, timestamp)
 	RETURNS bool AS $BODY$
 	BEGIN
-		RETURN compdates($1,$2) <= '1 day'::timestamp;
+		RETURN ($2::date-$1::date) <= 1;
 	END;		
 $BODY$ LANGUAGE plpgsql;
 
@@ -812,7 +794,7 @@ CREATE OR REPLACE
 FUNCTION leqDay(date,date)
 	RETURNS bool AS $BODY$
 	BEGIN
-		RETURN compdates($1,$2) <= '1 day'::timestamp;
+		RETURN ($2::date-$1::date) <= 7;
 	END;		
 $BODY$ LANGUAGE plpgsql;
 
@@ -821,7 +803,7 @@ CREATE OR REPLACE
 FUNCTION leqWeek(timestamp,timestamp)
 	RETURNS bool AS $BODY$
 	BEGIN
-		RETURN compdates($1,$2) <= '7 day'::timestamp;
+		RETURN ($2::date-$1::date) <= 7;
 	END;		
 $BODY$ LANGUAGE plpgsql;
 
@@ -830,20 +812,20 @@ CREATE OR REPLACE
 FUNCTION leqWeek(date,date)
 	RETURNS bool AS $BODY$
 	BEGIN
-		RETURN compdates($1,$2) <= '7 day'::timestamp;
+		RETURN ($2::date-$1::date) <= 7;
 	END;		
 $BODY$ LANGUAGE plpgsql;
 
 --tariffazione oraria
-CREATE OR REPLACE FUNCTION tOraria(intervallo interval,tariffaO numeric,tariffaC numeric,chilometri numeric)
+CREATE OR REPLACE FUNCTION tOraria(intervallo numeric,tariffaO numeric,tariffaC numeric,chilometri numeric)
 RETURNS Numeric AS $$
 	BEGIN
-		RETURN (tariffaO)*(SELECT EXTRACT (epoch FROM ( intervallo )::interval )/3600) + (tariffaC)*(chilometri);
+		RETURN (tariffaO)*(intervallo) + (tariffaC)*(chilometri);
 	END;
 $$ LANGUAGE plpgsql;
 
 --tariffazione giornaliera
-CREATE OR REPLACE FUNCTION tGiornaliera(intervallo interval,tariffaG numeric, tariffaC numeric,chilometri numeric)
+CREATE OR REPLACE FUNCTION tGiornaliera(intervallo numeric,tariffaG numeric, tariffaC numeric,chilometri numeric)
 RETURNS Numeric AS $$
 	BEGIN
 		RETURN (tariffaG)*(SELECT EXTRACT(DAY FROM (intervallo)::interval)) + (tariffaC)*(cconsegna - critiro);
@@ -851,25 +833,32 @@ RETURNS Numeric AS $$
 $$ LANGUAGE plpgsql;
 
 --tariffazione settimanale + giorliera aggiuntiva
-CREATE OR REPLACE FUNCTION tSettimanale(intervallo interval, tariffaS numeric,tariffaGA numeric, tariffaC numeric,chilometri numeric)
+CREATE OR REPLACE FUNCTION tSettimanale(intervallo numeric, tariffaS numeric,tariffaGA numeric, tariffaC numeric,chilometri numeric)
 RETURNS Numeric AS $$
 	BEGIN
-		RETURN (tariffaS)+(tariffaGA)*(SELECT EXTRACT(DAY FROM (intervallo)-7));
+		RETURN (tariffaS)+(tariffaGA)*(intervallo-7);
 	END;
 $$ LANGUAGE plpgsql;
 
 --emetti fattura abbiamo scelto di fissare penale al 10% non c'era tempo di aggiungere un campo/entita apposta sul db
-CREATE OR REPLACE FUNCTION emettiFattura(totale numeric,chilometripercorsi numeric,
+CREATE OR REPLACE FUNCTION emettiFattura(penale numeric,totale numeric,chilometripercorsi numeric,
 										tempoNonUsufruito interval, tempoUsufruito interval, 
 										tempoAnnullato interval)
 RETURNS VOID AS $$
+	DECLARE 
+	tn int;
+	tu int;
+	ta int;
 	BEGIN
-		INSERT INTO fatturazione(penale,totale,chilometripercorsi,tempononusufruito,tempousufruito,tempoannullato)
-		VALUES(0.1,totale,chilometripercorsi,tempononusufruito,tempousufruito,tempoannullato);
+		tn := EXTRACT (HOUR FROM tempononusufruito);
+		tu := EXTRACT (HOUR FROM tempousufruito);
+		ta := EXTRACT (HOUR FROM tempoannullato);
+		INSERT INTO fatturazione(penale,totalefatt,chilometripercorsi,tempononusufruito,tempousufruito,tempoannullato)
+		VALUES(penale,totale,chilometripercorsi,tn,tu,ta);
 	END;
 $$ LANGUAGE plpgsql;
 --versione senza logica per penali utile per riduzioni
-CREATE OR REPLACE FUNCTION MinorCosto(intervallo interval,tariffaO numeric, 
+CREATE OR REPLACE FUNCTION MinorCosto(intervallo numeric,tariffaO numeric, 
 										tariffaG numeric, tariffaS numeric,
 	 									TariffaC numeric, tariffaGA numeric,
 										critiro numeric, cconsegna numeric)
@@ -877,14 +866,14 @@ RETURNS numeric AS $$
 DECLARE 
 calc numeric;
 BEGIN
-		IF intervallo <= '1 day'::interval
+		IF intervallo <= 1
 		THEN calc := tOraria(intervallo,tariffaO,tariffaC,cconsegna-critiro);
 		END IF;
-		IF intervallo <= '7 day'::interval
+		IF intervallo <= 7
 		THEN calc := tGiornaliera(intervallo,tariffaG,tariffaC,cconsegna-critiro);
 		END IF;
-		IF intervallo <= '7 day'::interval
-		THEN calc := tSettimanale(fine-inizio::interval,tariffaS,tariffaGA,tariffaC,cconsegna-critiro);
+		IF intervallo > 7
+		THEN calc := tSettimanale(intervallo,tariffaS,tariffaGA,tariffaC,cconsegna-critiro);
 		END IF;
 	RETURN calc;
 END;
@@ -905,16 +894,18 @@ intervallo interval;
 BEGIN
 	penale:=0;
 	--tariffazione oraria
-	IF leqDay(ritiro, consegna)    
+	IF leqDay(ritiro::date, consegna::date)    
 	THEN
-		calc := tOraria(fine-inizio::interval,tariffaO,tariffaC,cconsegna-critiro);
+		calc := tOraria(extract(hour from fine)::int - extract(hour from inizio)::int,tariffaO,tariffaC,cconsegna-critiro);
+	
 	--tariffazione giornaliera	
-	ELSE IF leqWeek(ritiro, consegna)
+	ELSE IF leqWeek(ritiro::timestamp, consegna::timestamp)
 		THEN
-			calc := tGiornaliera(fine-inizio::interval,tariffaG,tariffaC,cconsegna-critiro);
+			calc := tGiornaliera(extract(DAY from fine)::int - extract(DAY from inizio)::int,tariffaG,tariffaC,cconsegna-critiro);
+	
 	--tariffazione settimanale + giornaliera aggiuntiva
 		ELSE 
-			calc := tSettimanale(fine-inizio::interval,tariffaS,tariffaGA,tariffaC,cconsegna-critiro);
+			calc := tSettimanale(extract(DAY from fine)::int - extract(DAY from inizio)::int,tariffaS,tariffaGA,tariffaC,cconsegna-critiro);
 		END IF;
 	END IF;
 	--applicazione penale nel caso di consegna ritardata
@@ -970,49 +961,69 @@ DECLARE
  tariffaGA numeric; Rottamazione numeric; calc numeric;
  penale numeric; annullato bool; tempoAnnullato interval; 	
 BEGIN
+
 --cerco i dati necessari...
-	SELECT datorainizio, dataorafine, 
-			toraria,tgiornaliera,tsettimanale,tchilometrica,tgiornalieraaggintiva,
-			bonusrottamazione
+	SELECT prenotazione.dataorainizio, prenotazione.dataorafine, 
+			modello.toraria,modello.tgiornaliera,modello.tsettimanale,
+			modello.tchilometrica,modello.tgiornalieraaggiuntiva,
+			abbonamento.bonusrottamazione
 	INTO inizio, fine, 
 		tariffaO, tariffaG, tariffaS, tariffaC, tariffaGA, rottamazione
 	FROM prenotazione 
 	NATURAL JOIN vettura
 	NATURAL JOIN modello
-	NATURAL JOIN abbonamento;
+	NATURAL JOIN abbonamento
+	WHERE prenotazione.numeroprenotazione = new.numeroprenotazione;
 	
-	IF EXISTS (SELECT nuovadatorainizio, nuovadataorafine
-			   FROM modificaprenotazione
+	IF EXISTS (SELECT modificaprenotazione.nuovadataorainizio, 
+			   		  modificaprenotazione.nuovadataorarest
+			   FROM   modificaprenotazione
 			   NATURAL JOIN prenotazione
+               WHERE prenotazione.numeroprenotazione = new.numeroprenotazione
 			   )
-		THEN SELECT nuovadatorainizio, nuovadataorafine, dataorarinuncia
-			   INTO modificainizio , modificafine, rinuncia
-			   FROM modificaprenotazione
-			   NATURAL JOIN prenotazione;
+			   
+		THEN 
+			SELECT  modificaprenotazione.nuovadataorainizio,	
+					modificaprenotazione.nuovadataorarest, 
+					modificaprenotazione.dataorarinuncia
+				INTO modificainizio , modificafine, rinuncia
+			   	FROM modificaprenotazione
+			   	NATURAL JOIN prenotazione
+               	WHERE prenotazione.numeroprenotazione = new.numeroprenotazione;
+	
 	--se la modificaprenotazione non ha data e` un annullamento
+		ELSE
+		modificainizio := NULL;
+		modificafine := NULL;
+		rinuncia := NULL;
 	END IF;
-	annullato = rinuncia != NULL AND modificainzio = NULL AND modificafine = NULL;
+	--se c'e` stato un annulmento setto flag
+	annullato := (rinuncia != NULL) AND (modificainizio = NULL) AND modificafine = NULL;
 	
 	IF annullato 
 		THEN TempoAnnullato := EXTRACT(HOUR FROM(fine-inizio))::int;
 		ELSE TempoAnnullato=0;
 	END IF;
+
 	calc := MinorCosto(inizio,fine,modificainizio,modificafine,
 					   rinuncia,tariffaO,tariffaG,tariffaS,TariffaC,
-					   tariffaGA,Rottamazione,calc,penale,annullato,
-					   new.dataoraritiro,new.datorariconsegna,
+					   tariffaGA,annullato,new.dataoraritiro,new.dataorariconsegna,
 					   new.chilometraggioritiro,new.chilometraggioriconsegna);
 					   
 	--se rottamazione la applico (percentuale)
 	IF rottamazione != 0
 		THEN calc:= calc - calc*rottamazione/100;
 	END IF;
-	
+	IF new.dataorariconsegna > fine
+	THEN
+		penale=0.1;
+	ELSE 
+		penale=0;
+	END IF;
 	--emetto fattura con la tariffazzione calcolata
 	SELECT emettiFattura(penale,calc, new.chilometraggioriconsegna-new.chilometraggioritiro,
-				 EXTRACT(HOUR FROM((fine-inizio)-(consegna-ritiro))::int),
-				 EXTRACT(HOUR FROM consegna-ritiro)::int, tempoAnnullato);
-	
+				 ((fine-inizio)-(new.dataorariconsegna-new.dataoraritiro)),
+				 new.dataorariconsegna-new.dataoraritiro, tempoAnnullato);
 	END;
 $calcFatt$ LANGUAGE plpgsql;
 
@@ -1021,25 +1032,24 @@ $calcFatt$ LANGUAGE plpgsql;
 CREATE OR REPLACE FUNCTION checkData()
 RETURNS TRIGGER AS $chkdate$
 DECLARE
- ritiro timestamp;
  prenotazione timestamp;
  modifica timestamp;
 BEGIN
-	SELECT dataorainizio dataoraritiro
-	INTO prenotazione, ritiro 
+	SELECT dataorainizio 
+	INTO prenotazione  
 	FROM prenotazione 
-	NATURAL JOIN utilizzo
-	NATURAL JOIN NEW;
-	IF EXISTS (SELECT nuovadatorainizio
-			   INTO modifica
+	WHERE new.numeroprenotazione = prenotazione.numeroprenotazione;
+	IF EXISTS (SELECT modificaprenotazione.nuovadataorainizio
+			   --INTO modifica
 			   FROM modificaprenotazione
 			   NATURAL JOIN prenotazione
-			   )
+			   WHERE new.numeroprenotazione = prenotazione.numeroprenotazione 	
+			  )
 		THEN 
-		-- prenotazione modificata
+		    -- prenotazione modificata
 			prenotazione = modifica;
 	END IF;
-	IF ritiro < prenotazione
+	IF new.dataoraritiro < prenotazione
 	THEN
 		RAISE EXCEPTION 'Inserimento abortito: la data di ritiro=(%) < prenotazione (o modificaPrenotazione)=(%)',  prenotazione,ritiro
       	USING HINT = 'prova a cambiare la data di ritiro o prenotazione o rischedulare la prenotazione.. ';
@@ -1078,8 +1088,8 @@ BEGIN
 	aData := now()::timestamp;
 	SELECT dataorainizio
 	INTO bData
-	FROM prenotazione NATURAL JOIN New ;
-	--WHERE prenotazione.numeroprenotazione = new.numeroprenotazione;
+	FROM prenotazione
+	WHERE prenotazione.numeroprenotazione = new.numeroprenotazione;
 	IF bData > aData AND new.nuovaoradatainizio < new.nuovaoradatafine
 	THEN new.dataorarinuncia = aData;
 	RETURN NEW;
@@ -1109,6 +1119,9 @@ EXECUTE PROCEDURE checkData();
 CREATE TRIGGER calcFatt AFTER INSERT OR UPDATE ON Utilizzo
 FOR EACH ROW EXECUTE PROCEDURE calcFatt();
 
+/* UTILIZZO CON CASI DI TEST*/
+INSERT INTO carsharing.utilizzo VALUES (13, 2000, '2019-07-05 00:00:00', '2019-07-15 00:00:00', 2750);
+
 --Some Checks!
 ALTER TABLE Modello ADD CHECK(lunghezza > 1000);
 ALTER TABLE Modello ADD CHECK(larghezza > 1000);
@@ -1122,7 +1135,7 @@ ALTER TABLE Vettura ADD CHECK (targa ~ $$[A-Za-z]{2}[0-9]{3}[A-Za-z]{2}$$);
 ALTER TABLE Rifornimenti ADD CHECK(litri < 100);
 ALTER TABLE Sinistro ADD CHECK (dataOra > now() - interval '10 day');
 ALTER TABLE Testimoni ADD CHECK (dataDiNascita < now() - interval '18 year' );
-ALTER TABLE Rappresentante ADD CHECK (dataDiNascita < now() - interval '18 year');
+ALTER TABLE Rappresentante ADD CHECK(dataDiNascita < now() - interval '18 year');
 ALTER TABLE Azienda ADD CHECK (piva != 0);
 ALTER TABLE Sede ADD CHECK (tiposede = 'Legale' or tiposede = 'Operativa');
 ALTER TABLE Documento ADD CHECK(dataDiNascita < now() - interval '18 year');
