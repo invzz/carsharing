@@ -1,14 +1,12 @@
 SELECT PA.*
 FROM  parcheggio AS PA , vettura AS V ,prenotazione AS PR, modello AS Mo, Categoria AS Cat
-
 WHERE Cat.categoria ='City Car' AND
        PA.nomeparcheggio = V.sede AND
 	   V.nomevettura = PR.nomevettura AND
 	   V.modello = Mo.NomeModello  AND
 	   Mo.categoria = Cat.categoria AND
-      EXTRACT (HOUR from current_date) + 3 = EXTRACT(HOUR from PR.dataOraInizio::Date)
-////////////////////////////////////////////////////////////////////////////////////////////
-
+      EXTRACT (HOUR FROM current_date) + 3 = EXTRACT(HOUR FROM PR.dataOraInizio::Date)
+--
 SELECT U.*, V.nomevettura, V.targa, utilizzo.dataOraRiconsegna
 FROM Utente AS U NATURAL JOIN metododipagamento AS MDP
 	 NATURAL JOIN abbonamento AS Ab
@@ -17,68 +15,63 @@ FROM Utente AS U NATURAL JOIN metododipagamento AS MDP
 WHERE prenotazione.numsmartcard = Ab.numsmartcard AND
 	  prenotazione.numeroprenotazione = utilizzo.numeroprenotazione AND
       utilizzo.dataOraRitiro::date < utilizzo.dataOraRiconsegna::date
-///////////////////////////////////////////////////////////////////////////////////////////
+--
 SELECT pa.nomeparcheggio, cat.categoria
-FROM parcheggio as pa, vettura as v, prenotazione as pr,
-     modello as mo, categoria as cat
+FROM parcheggio AS pa, vettura AS v, prenotazione AS pr,
+     modello AS mo, categoria AS cat
 WHERE pa.nomeparcheggio = v.sede AND
 	  v.nomevettura = pr.nomevettura AND
 	  v.modello = mo.nomemodello AND
 	  mo.categoria = cat.categoria AND
-	  EXTRACT(hour from current_date)+1 = EXTRACT(hour from pr.dataOraInizio)
+	  EXTRACT(hour FROM current_date)+1 = EXTRACT(hour FROM pr.dataOraInizio)
 GROUP BY pa.nomeparcheggio,cat.categoria
 HAVING count(*) >= 1
-///////////////////////////////////////////////////////////////////////////////////////////
-Select *
-from prenotazione as p1
+--
+SELECT *
+FROM prenotazione AS p1
 except
-Select *
-from prenotazione as p2
-where p2.nomevettura like 'Andrea'
-/////////////////////////////////////////////////////////////////////////////////////////
-select v.*
-from vettura as v right outer join prenotazione as pr
+SELECT *
+FROM prenotazione AS p2
+WHERE p2.nomevettura LIKE 'Andrea'
+--
+SELECT v.*
+FROM vettura AS v RIGHT OUTER JOIN prenotazione AS pr
 	 on v.nomevettura = pr.nomevettura
-where v.chilometraggio > 10000 AND v.chilometraggio <=25000
-////////////////////////////////////////////////////////////////////////////////////////
-select *
-from parcheggio as pr JOIN vettura as v on pr.nomeparcheggio = v.sede
-where pr.numposti > 5 and pr.zona like 'ponente'
-////////////////////////////////////////////////////////////////////////////////////////
-Select V.*
-from vettura AS V
-WHERE V.chilometraggio >= ALL(select v2.chilometraggio
-							  from vettura as v2)
-////////////////////////////////////////////////////////////////////////////////////
+WHERE v.chilometraggio > 10000 AND v.chilometraggio <=25000
+--
+SELECT *
+FROM parcheggio AS pr JOIN vettura AS v on pr.nomeparcheggio = v.sede
+WHERE pr.numposti > 5 and pr.zona LIKE 'ponente'
+--
+SELECT V.*
+FROM vettura AS V
+WHERE V.chilometraggio >= ALL(SELECT v2.chilometraggio
+							  FROM vettura AS v2)
+--
 SELECT pr.numeroprenotazione
-from prenotazione as pr Natural join modificaprenotazione as mp
-where mp.dataorarinuncia = NULL
+FROM prenotazione AS pr NATURAL JOIN modificaprenotazione AS mp
+WHERE mp.dataorarinuncia = NULL
 group by pr.numeroprenotazione
-/////////////////////////////////////////////////////////////////////////////////////
-
-/*DIVISIONE UTILIZZANDO LE NOT EXISTS*/
+--divisione
 SELECT pr.*
-from prenotazione as pr
-where not exists(select *
-				 from vettura
-				 where not exists(select *
-								  from parcheggio as pa
-								   where pa.numposti > 5 AND
+FROM prenotazione AS pr
+WHERE not exists(SELECT *
+				 FROM vettura
+				 WHERE not exists(SELECT *
+								  FROM parcheggio AS pa
+								   WHERE pa.numposti > 5 AND
 								         pa.numposti < 10))
-//////////////////////////////////////////////////////////////////////////////////
-/*Vettura con chilometraggio più alto*/
-select v.*
-from vettura as v
-where v.chilometraggio >= (select MAX(v2.chilometraggio)
-							 from vettura as v2)
-/////////////////////////////////////////////////////////////////////////////////
-/*modello con tariffa oraria <= alla media delle T orarie*/
-Select mo.*
-from  modello as mo
-where mo.toraria <= (select AVG(mo2.toraria)
-					 from modello as mo2)
-////////////////////////////////////////////////////////////////////////////////
-/*Prenotazioni con lo stesso numero di smartcard*/
-select count(*) as numDiSmartcadUguali
-from prenotazione as pr1 NATURAL JOIN vettura as v
-where pr1.numsmartcard = 1
+--Vettura con chilometraggio più alto
+SELECT v.*
+FROM vettura AS v
+WHERE v.chilometraggio >= (SELECT MAX(v2.chilometraggio)
+							 FROM vettura AS v2)
+--modello con tariffa oraria <= alla media delle T orarie
+SELECT mo.*
+FROM  modello AS mo
+WHERE mo.toraria <= (SELECT AVG(mo2.toraria)
+					 FROM modello AS mo2)
+--Prenotazioni con lo stesso numero di smartcard
+SELECT count(*) AS numDiSmartcadUguali
+FROM prenotazione AS pr1 NATURAL JOIN vettura AS v
+WHERE pr1.numsmartcard = 1

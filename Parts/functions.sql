@@ -124,20 +124,17 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
---CalcolaEta
+--Calcola Eta per insert persona
 CREATE OR REPLACE 
 FUNCTION calcolaEta(date)
 RETURNS int as $$
-DECLARE
-
 BEGIN
-
 	RETURN (SELECT EXTRACT(YEAR FROM age($1)));
 END;
 $$ LANGUAGE plpgsql;
 
 
--- InsertPersona Controlla che un conducente che non sia conducente per una azienda abiti insieme alla persona
+-- InsertPersona Controlla che un conducente abiti insieme alla persona prima di inserirlo
 CREATE OR REPLACE 
 FUNCTION insertPersona(codFisc char(16) ,id_conducente1 int, telefono varchar(11), nrDocumento1 varchar(10),nrPatente varchar(10))
 RETURNS VOID AS $$
@@ -251,5 +248,8 @@ BEGIN
 	VALUES (datainizio,datainizio + days * INTERVAL '1 day',databonus,bonus,pin,card,tipo1);
 END;
 $$ LANGUAGE plpgsql
+
+
+
 
 

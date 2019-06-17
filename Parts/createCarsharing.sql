@@ -144,7 +144,7 @@ CREATE TABLE Vettura (
 
 
 CREATE TABLE Prenotazione (
-	NumeroPrenotazione serial PRIMARY KEY,
+	NumeroPrenotazione serial PRIMARY KEY, -- GENERATED ALWAYS AS IDENTITY (START WITH 1),
 	numSmartCard int NOT NULL, 
 	NomeVettura varchar(10) REFERENCES Vettura,
 	dataOraInizio timestamp NOT NULL,

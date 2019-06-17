@@ -205,7 +205,7 @@ INSERT INTO carsharing.modificaprenotazione VALUES (13, '2018-06-28', '2018-07-0
 INSERT INTO carsharing.modificaprenotazione VALUES (14, '2018-06-28', '2018-07-16', '2019-07-18');
 INSERT INTO carsharing.modificaprenotazione VALUES (15, '2018-07-01', '2018-07-01', '2019-07-21');
 
-/* UTILIZZO */
+/* UTILIZZO CON CASI DI TEST*/
 INSERT INTO carsharing.utilizzo VALUES (13, 2000, '2019-07-01 00:00:00', '2019-07-05 00:00:00', 2750);
 INSERT INTO carsharing.utilizzo VALUES (14, 7500, '2017-07-16 00:00:00', '2017-07-18 00:00:00', 7750);
 INSERT INTO carsharing.utilizzo VALUES (15, 2000, '2018-07-01 00:00:00', '2018-07-21 00:00:00', 3500);
